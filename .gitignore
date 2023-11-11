@@ -1,0 +1,14 @@
+.idea/
+.vscode/
+venv/
+media/
+__pycache__/
+*.pyc
+*.sqlite3
+static/
+static_dev/
+*.bak
+*.dat
+*.dir
+*.db
+prod_config.py
