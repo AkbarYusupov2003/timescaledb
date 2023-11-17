@@ -17,18 +17,11 @@ class TimescaleModel(models.Model):
     class Meta:
         abstract = True
 
-# Subscriptions model: type, time
+
 class Subscription(TimescaleModel):
     subscription_id = models.IntegerField()
-    
     count = models.IntegerField()
-    # time = TimescaleDateTimeField(interval="1 day") # interval????
-    # objects = TimescaleManager()
 
 
-class Transaction(TimescaleModel):
-    transaction_id = models.IntegerField()
-    
+class Register(TimescaleModel):    
     count = models.IntegerField()
-    # time = TimescaleDateTimeField(interval="1 day") # interval????
-    # objects = TimescaleManager()
