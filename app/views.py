@@ -1,5 +1,6 @@
 import json
 import datetime
+from django.views import View
 from django.db import connection
 from django.db.models import Sum
 from django.shortcuts import render, HttpResponse
@@ -7,8 +8,12 @@ from rest_framework import generics, permissions, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from app import utils
 from app import models
 from app import serializers
+
+
+# http://127.0.0.1:8000/subscriptions-stat/?period=day&from_date=2023-12-16+00:00:00.000Z&to_date=2023-12-17+00:00:00.000Z&sub_type=1
 
 
 # Register
@@ -118,3 +123,14 @@ class SubscriptionListAPIView(APIView):
         queryset = self.get_queryset()
         res = self.serializer_class(queryset, many=True)
         return Response(res.data, status=200)
+
+
+# Load data to db
+class LoadDailyRegisterView(View):
+    SIGNUP_URL = "https://api.splay.uz/en/api/v2/sevimlistat/account_registration/"
+    
+    def get(self, *args, **kwargs):
+        period = "hours" # ["hours", "days", "months"]
+        data = utils.get_splay_data(self.SIGNUP_URL, params={'period': period})
+        print("DATA: ", data)
+        return HttpResponse("loaded daily register data")
