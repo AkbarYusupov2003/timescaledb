@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from app import models
+from statistic import models
 
 
 @admin.register(models.Subscription)

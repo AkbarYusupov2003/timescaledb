@@ -6,7 +6,7 @@ try:
 except:
     print("Error: local_settings.py file does not exists")
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = 'django-insecure-%6ft#6s_w+_b$lh#c!9ec56h8o#!)!*dyyc08e!-1192sq9g%h'
 
@@ -23,8 +23,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # third party apps
     "rest_framework",
+    "drf_yasg",
     # my apps
-    "app",
+    "api",
+    "internal",
+    "statistic",
 ]
 
 MIDDLEWARE = [
