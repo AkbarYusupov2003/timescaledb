@@ -12,7 +12,7 @@ def hourly_register_task():
     period = "hours"
     data = data_extractor.get_data(data_extractor.SIGNUP_URL, params={'period': period})
     time = datetime.datetime.now() - datetime.timedelta(hours=1)
-    if data:
+    if type(data) == dict:
         models.Register.objects.create(count=data.get("count", 0), time=time)
 
 
@@ -21,7 +21,7 @@ def hourly_subscription_task():
     period = "hours"
     data = data_extractor.get_data(data_extractor.TRANSACTION_URL, params={'period': period})
     time = datetime.datetime.now() - datetime.timedelta(hours=1)
-    if data:
+    if type(data) == dict:
         for key, value in data.items():
             models.Subscription.objects.create(sub_id=key, count=value, time=time)
 

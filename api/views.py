@@ -34,14 +34,16 @@ class CreateHistoryAPIView(APIView):
 
         user_agent = request.META.get('HTTP_USER_AGENT', '')
         device = "device" # self.request.auth.payload.get("device", "not available")
-        data = {"ip_address": ip_address, "user_agent": user_agent, "device": device}
+        data = {"ip_address": ip_address, "user_agent": user_agent, "device": device, "time": datetime.datetime.now()}
         if content_id:
             data["content_id"] = content_id
             if episode_id:
                 data["episode_id"] = episode_id
         elif broadcast_id:
             data["broadcast_id"] = broadcast_id
-        
+        else:
+            return HttpResponse(status=400)
+            
         models.History.objects.create(**data)
 
         return HttpResponse("Ok")

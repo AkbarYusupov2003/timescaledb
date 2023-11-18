@@ -10,22 +10,17 @@ class TimescaleModel(models.Model):
     class Meta:
         abstract = True
 
-# content_id int,episode_id int,watched_users_count int,watched_duration int, ts timestamp
-class ContentStat(TimescaleModel):
-    # owner = models.ForeignKey() #Content
 
-    age_group = 1
-    sex = 1
-    
-    watched_users_count = 1
-    watched_duration = 1
-    timestamp = 1
-    # content
-    
+# class ContentStat(TimescaleModel):
+#     # owner = models.ForeignKey("Content")
+#     age_group = 1
+#     sex = 1
+#     views = 1
+#     duration = 1
+
 
 class Subscription(TimescaleModel):
     sub_id = models.CharField(max_length=8)
-    # subscription_id = models.IntegerField()
     count = models.IntegerField()
     
     class Meta:
@@ -40,17 +35,8 @@ class Register(TimescaleModel):
         verbose_name = "Регистрация"
         verbose_name_plural = "Регистрации"
 
-# История Просмотров
-class History(models.Model): #(TimescaleModel):
-    # class StatusChoices(models.IntegerChoices):
-    #     watching = 1, "Смотрит"
-    #     watched = 2, "Просмотрено"
-    
-    # status = models.PositiveSmallIntegerField(
-    #     choices=StatusChoices.choices, default=1
-    # )
-    #
-    # foreign key content
+
+class History(TimescaleModel):
     content_id = models.IntegerField(blank=True)
     broadcast_id = models.IntegerField(blank=True)
     episode_id = models.IntegerField(blank=True)
