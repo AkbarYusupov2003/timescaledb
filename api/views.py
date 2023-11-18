@@ -3,14 +3,15 @@ import datetime
 from django.views import View
 from django.db import connection
 from django.db.models import Sum
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import HttpResponse
 from rest_framework import generics, permissions, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
 
 from api import serializers
 from statistic import models
-from internal.models import AllowedSubscription, AllowedPeriod
+from internal.models import AllowedSubscription, AllowedPeriod, Content
 
 
 # http://127.0.0.1:8000/subscriptions-stat/?period=day&from_date=2023-12-16+00:00:00.000Z&to_date=2023-12-17+00:00:00.000Z&sub_type=1
@@ -24,7 +25,7 @@ class CreateHistoryAPIView(APIView):
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
         except:
-            return HttpResponse(status=400)
+            return Response(status=400)
         
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -42,19 +43,32 @@ class CreateHistoryAPIView(APIView):
         elif broadcast_id:
             data["broadcast_id"] = broadcast_id
         else:
-            return HttpResponse(status=400)
+            return Response(status=400)
             
         models.History.objects.create(**data)
-
-        return HttpResponse("Ok")
+        return Response("Ok")
 
 
 # Content
-class ContentListAPIView(APIView):
+class ContentListAPIView(generics.GenericAPIView):
+    queryset = Content.objects.all()
+    serializer_class = serializers.ContentSerializer
+    pagination_class = LimitOffsetPagination
     
     def get(self, request, *args, **kwargs):
-        # get list of content
-        return Response({"worked": "yes"},status=200)
+        queryset = self.get_queryset()
+        res = []
+        for content in queryset:
+            stats = models.History.objects.filter(
+                content_id=content.content_id, 
+                episode_id=content.episode_id,
+            )
+            content = self.serializer_class(content).data
+            content["watched_users"] = stats.count()
+            content["watched_duration"] = stats.aggregate(Sum("duration"))["duration__sum"] or 0
+            res.append(content)
+
+        return Response(res, status=200)
 
 
 # Register

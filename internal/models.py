@@ -28,7 +28,7 @@ class Sponsor(models.Model):
     title = models.CharField(max_length=255)
     
     def __str__(self):
-        return self.title_ru
+        return self.title
     
     class Meta:
         verbose_name = "Спонсор"
@@ -49,18 +49,21 @@ class Category(models.Model):
 
 
 class Content(models.Model):
-    title_ru = models.CharField(max_length=255, blank=True)
+    title_ru = models.CharField(max_length=255)
     title_en = models.CharField(max_length=255, blank=True)
     title_uz = models.CharField(max_length=255, blank=True)
-    episode_id = models.PositiveIntegerField(blank=True)
-    content_id = models.PositiveIntegerField(blank=True)
+    #
+    content_id = models.PositiveIntegerField()
+    episode_id = models.PositiveIntegerField(null=True, blank=True)
+    #
     is_russian = models.BooleanField(default=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     sponsors = models.ManyToManyField(Sponsor)
     allowed_subscriptions = models.ManyToManyField(AllowedSubscription)
-    movie_duration = models.PositiveIntegerField()
-    slug = models.SlugField(unique=True)
-    year = models.PositiveSmallIntegerField(default=0)
+    #
+    duration = models.PositiveIntegerField()
+    slug = models.SlugField(unique=True) # TODO IS SLUG REQUIRED?
+    year = models.PositiveSmallIntegerField(blank=True)
     
     class Meta:
         verbose_name = "Контент"

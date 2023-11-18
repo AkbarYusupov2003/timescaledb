@@ -4,4 +4,3 @@ SPLAY_STAT_SECRET_KEY = ""
 
 CELERY_BROKER_URL = "redis://localhost:6379"
 CELERY_RESULT_BACKEND = "redis://localhost:6379"
-CELERY_TIMEZONE = "Asia/Tashkent"
