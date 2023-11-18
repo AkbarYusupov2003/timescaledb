@@ -51,7 +51,9 @@ class CreateHistoryAPIView(APIView):
 
 # Content
 class ContentListAPIView(generics.GenericAPIView):
-    queryset = Content.objects.all()
+    queryset = Content.objects.all().select_related(
+        "category"
+    ).prefetch_related("sponsors", "allowed_subscriptions")
     serializer_class = serializers.ContentSerializer
     pagination_class = LimitOffsetPagination
     

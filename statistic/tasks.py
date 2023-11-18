@@ -26,6 +26,16 @@ def hourly_subscription_task():
             models.Subscription.objects.create(sub_id=key, count=value, time=time)
 
 
+def synchronize_content_task():
+    
+    data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL)
+    print("DATA: ", data)
+    
+    # def get_content_data(params):
+    # data = get_request(CONTENT_DATA_URL, params=params).get('results')
+    # return data
+
+
 app.conf.beat_schedule = {
     'hourly-register-task': {
         'task': 'hourly-register-task',

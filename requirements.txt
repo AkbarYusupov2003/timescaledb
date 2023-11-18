@@ -4,3 +4,5 @@ drf-yasg==1.21.7
 django-timescaledb==0.2.13
 psycopg2==2.9.9
 requests==2.31.0
+
+django-debug-toolbar==4.2.0

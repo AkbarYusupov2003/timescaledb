@@ -4,7 +4,7 @@ from pathlib import Path
 try:
     from .local_settings import * 
 except:
-    print("Error: local_settings.py file does not exists")
+    raise ImportError("config/settings/local_settings.py file does not exists")
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -60,12 +60,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 DATABASES = {
     'default': {
         'ENGINE': 'timescale.db.backends.postgresql',
@@ -103,3 +97,4 @@ USE_TZ = False
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+

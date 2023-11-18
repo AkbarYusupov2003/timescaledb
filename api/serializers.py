@@ -36,6 +36,7 @@ class ContentSerializer(serializers.ModelSerializer):
             "sponsors", "allowed_subscriptions", "duration", "slug", "year"
         )
 
+
 # ------------------------------------------------------------------------------------
 class RegisterSerializer(serializers.Serializer):
     time = serializers.SerializerMethodField(source="get_time")
