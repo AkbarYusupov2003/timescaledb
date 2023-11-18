@@ -2,7 +2,7 @@ from django.db import models
 
 
 class AllowedSubscription(models.Model):
-    sub_id = models.CharField(max_length=8)    
+    sub_id = models.CharField(unique=True, max_length=8)    
     description = models.CharField(max_length=512)
     
     def __str__(self):

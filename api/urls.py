@@ -6,7 +6,7 @@ from api import views
 app_name = "api"
 
 urlpatterns = [ 
-    path("update-history/", views.UpdateHistoryAPIView.as_view()),
+    path("create-history/", views.CreateHistoryAPIView.as_view()),
     #
     path('content-stat/', views.ContentListAPIView.as_view()),
     #
@@ -15,7 +15,5 @@ urlpatterns = [
     #
     path("subscriptions-stat/", views.SubscriptionListAPIView.as_view()),
     path("subscriptions-stat/total/", views.SubscriptionTotalAPIView.as_view()),
-    #
-    path("load-daily-register/", views.LoadDailyRegisterView.as_view()),
     #
 ]

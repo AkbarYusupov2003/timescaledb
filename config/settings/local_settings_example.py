@@ -1,4 +1,5 @@
 MAX_RETRIES = 3
+SPLAY_HOST = ""
 SPLAY_STAT_SECRET_KEY = ""
 
 CELERY_BROKER_URL = "redis://localhost:6379"

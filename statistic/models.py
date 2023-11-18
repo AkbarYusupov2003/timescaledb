@@ -24,7 +24,8 @@ class ContentStat(TimescaleModel):
     
 
 class Subscription(TimescaleModel):
-    subscription_id = models.IntegerField()
+    sub_id = models.CharField(max_length=8)
+    # subscription_id = models.IntegerField()
     count = models.IntegerField()
     
     class Meta:
@@ -38,3 +39,28 @@ class Register(TimescaleModel):
     class Meta:
         verbose_name = "Регистрация"
         verbose_name_plural = "Регистрации"
+
+# История Просмотров
+class History(models.Model): #(TimescaleModel):
+    # class StatusChoices(models.IntegerChoices):
+    #     watching = 1, "Смотрит"
+    #     watched = 2, "Просмотрено"
+    
+    # status = models.PositiveSmallIntegerField(
+    #     choices=StatusChoices.choices, default=1
+    # )
+    #
+    # foreign key content
+    content_id = models.IntegerField(blank=True)
+    broadcast_id = models.IntegerField(blank=True)
+    episode_id = models.IntegerField(blank=True)
+    
+    user_agent = models.CharField(max_length=128)
+    ip_address = models.CharField(max_length=16)
+    device = models.CharField(max_length=64)
+
+    duration = models.PositiveIntegerField()
+
+    class Meta:
+        verbose_name = "История просмотра"
+        verbose_name_plural = "Истории просмотров"

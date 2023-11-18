@@ -23,7 +23,6 @@ def get_data(url, params):
             result = response.json()
             break
         except IOError as e:
-            print(e)
             count += 1
     return result
     
