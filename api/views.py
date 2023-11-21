@@ -129,31 +129,34 @@ class ContentListAPIView(generics.GenericAPIView):
         res = []
         
         for content in queryset:
-            # models.ContentHour.objects.filter(content.content_id)
             cursor = connection.cursor()
             print("EPISODE", content.episode_id)
             cursor.execute(
                 f"""
-                    SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group, gender
+                    SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
                     FROM statistic_contenthour
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
                           (content_id = '{content.content_id}')   
                           {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
-                    ORDER BY interval DESC;
                 """
             )
             r =  cursor.fetchall()
-            print("r ", r)
+            users = duration = 0
+            age_group = {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0}
+            gender = {"M": 0, "W": 0}
+            for x in r:
+                users += x[1]
+                duration += x[2]
+                age_group.update(x[3])
+                gender.update(x[4])
+                
+            content = self.serializer_class(content).data
+            content["watched_users"] = users
+            content["watched_duration"] = duration
+            content["age_group"] = age_group
+            content["gender"] = gender
             
-        # for content in queryset:
-        #     stats = models.History.objects.filter(
-        #         content_id=content.content_id, 
-        #         episode_id=content.episode_id,
-        #     )
-        #     content = self.serializer_class(content).data
-        #     content["watched_users"] = stats.count()
-        #     content["watched_duration"] = stats.aggregate(Sum("duration"))["duration__sum"] or 0
-        #     res.append(content)
+            res.append(content)
 
         return Response(res, status=200)
 
