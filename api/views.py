@@ -84,7 +84,7 @@ class CreateHistoryAPIView(APIView):
                 data["episode_id"] = episode_id
                 data["slug"] = f"{content_id}_{episode_id}"
             else:
-                data["slug"] = str(content_id)
+                data["slug"] = f"{content_id}_null"
         elif broadcast_id:
             data["broadcast_id"] = broadcast_id
             data["slug"] = str(broadcast_id)
@@ -105,17 +105,55 @@ class ContentListAPIView(generics.GenericAPIView):
     pagination_class = LimitOffsetPagination
     
     def get(self, request, *args, **kwargs):
+        from_date = self.request.GET.get("from_date")
+        to_date = self.request.GET.get("to_date")
+        period = self.request.GET.get("period")
+        sub_id = 1 # TODO
+        # validation
+        allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
+        
+        if not(period in allowed_periods):
+            print(1)
+            return Response(status=400)
+        
+        try:
+            date_format = "%Y-%m-%d"
+            from_date = datetime.datetime.strptime(from_date, date_format)
+            to_date = datetime.datetime.strptime(to_date, date_format)
+        except:
+            print(2)
+            return Response(status=400)
+        # -----------
+        
         queryset = self.get_queryset()
         res = []
+        
         for content in queryset:
-            stats = models.History.objects.filter(
-                content_id=content.content_id, 
-                episode_id=content.episode_id,
+            # models.ContentHour.objects.filter(content.content_id)
+            cursor = connection.cursor()
+            print("EPISODE", content.episode_id)
+            cursor.execute(
+                f"""
+                    SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group, gender
+                    FROM statistic_contenthour
+                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
+                          (content_id = '{content.content_id}')   
+                          {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
+                    ORDER BY interval DESC;
+                """
             )
-            content = self.serializer_class(content).data
-            content["watched_users"] = stats.count()
-            content["watched_duration"] = stats.aggregate(Sum("duration"))["duration__sum"] or 0
-            res.append(content)
+            r =  cursor.fetchall()
+            print("r ", r)
+            
+        # for content in queryset:
+        #     stats = models.History.objects.filter(
+        #         content_id=content.content_id, 
+        #         episode_id=content.episode_id,
+        #     )
+        #     content = self.serializer_class(content).data
+        #     content["watched_users"] = stats.count()
+        #     content["watched_duration"] = stats.aggregate(Sum("duration"))["duration__sum"] or 0
+        #     res.append(content)
 
         return Response(res, status=200)
 
@@ -138,7 +176,7 @@ class RegisterListAPIView(APIView):
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format)
-        except Exception as e:
+        except:
             return []
         # -----------
         cursor = connection.cursor()

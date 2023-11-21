@@ -27,6 +27,16 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ("title_ru", )
 
 
+@admin.register(models.BroadcastCategory)
+class BroadcastAdmin(admin.ModelAdmin):
+    list_display = ("title_ru", )
+
+
 @admin.register(models.Content)
 class ContentAdmin(admin.ModelAdmin):
     list_display = ("title_ru", )
+
+
+@admin.register(models.Broadcast)
+class BroadcastAdmin(admin.ModelAdmin):
+    list_display = ("pk", "title", "broadcast_id")

@@ -5,8 +5,8 @@ from celery import shared_task
 from celery.schedules import crontab
 
 from config.celery import app
-from internal.models import Content
-from statistic.utils import data_extractor
+from internal.models import Content, Broadcast
+from statistic.utils import data_extractor, etc
 from statistic import models
 
 
@@ -34,15 +34,16 @@ def hourly_history_task():
     from_time = to_time - datetime.timedelta(hours=1)
     histories = models.History.objects.filter(
         time__range=(from_time, to_time),
-    ) #.annotate(a=Sum("duration"))
+    )
     print("TIME: ", from_time, to_time)
     print("histories", histories)
     for history in histories:
-        print("history gender", history.gender)
         try:
             if history.content_id:
-                if Content.objects.get(
-                    content_id=history.content_id, episode_id=history.episode_id
+                print("content", history.content_id, history.episode_id)
+                if etc.exists_or_create(
+                    {"content_id": history.content_id, "episode_id": history.episode_id},
+                    history.slug
                 ):
                     content, _ = models.ContentHour.objects.get_or_create(
                         time=from_time, content_id=history.content_id, episode_id=history.episode_id
@@ -53,26 +54,22 @@ def hourly_history_task():
                     content.watched_duration = F("watched_duration") + history.duration
                     content.save()
             elif history.broadcast_id:
-                print("history broadcast", history.broadcast_id)
-                # if Broadcast
+                if Broadcast.objects.get(
+                    broadcast_id=history.broadcast_id
+                ):
+                    broadcast, _ = models.BroadcastHour.objects.get_or_create(
+                        time=from_time, broadcast_id=history.broadcast_id,
+                    )
+                    broadcast.age_group[str(history.age_group)] += 1
+                    broadcast.gender[history.gender] += 1
+                    broadcast.watched_users_count = F("watched_users_count") + 1
+                    broadcast.watched_duration = F("watched_duration") + history.duration
+                    broadcast.save()
         except Exception as e:
             print("Exception", e)
 
-    # cursor = connection.cursor()
-    # cursor.execute(
-    #     f"""
-    #         SELECT *
-    #         FROM statistic_history
-    #         WHERE (time BETWEEN '{from_time}' AND '{to_time}')
-    #         ORDER BY time DESC;
-    #     """
-    # )
-    # print("cursor.fetchall()", cursor.fetchall())
-
 
 def synchronize_content_task():
-    # params={"id_slugs": [123_null,456_654, contentid_episodeid]}
-    #data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ["4632_12697"]}) 
     data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
     print("DATA: ", data)
 
