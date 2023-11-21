@@ -11,12 +11,25 @@ class TimescaleModel(models.Model):
         abstract = True
 
 
-# class ContentStat(TimescaleModel):
-#     # owner = models.ForeignKey("Content")
-#     age_group = 1
-#     sex = 1
-#     views = 1
-#     duration = 1
+class ContentHour(TimescaleModel):
+    # TODO age_group gender
+    content_id = models.IntegerField()
+    episode_id = models.IntegerField(blank=True, null=True)
+    watched_users_count = models.PositiveIntegerField()
+    watched_duration = models.PositiveIntegerField()
+
+    class Meta:
+        verbose_name = "Контента за час"
+        verbose_name_plural = "Контенты за час"
+
+class BroadcastHour(TimescaleModel):
+    # TODO age_group gender
+    watched_users_count = models.PositiveIntegerField()
+    watched_duration = models.PositiveIntegerField()
+    
+    class Meta:
+        verbose_name = "Прямой эфир за час"
+        verbose_name_plural = "Прямые эфиры за час"
 
 
 class Subscription(TimescaleModel):
@@ -37,15 +50,17 @@ class Register(TimescaleModel):
 
 
 class History(TimescaleModel):
-    content_id = models.IntegerField(blank=True)
-    broadcast_id = models.IntegerField(blank=True)
-    episode_id = models.IntegerField(blank=True)
+    slug = models.SlugField()
+    content_id = models.IntegerField(blank=True, null=True)
+    broadcast_id = models.IntegerField(blank=True, null=True)
+    episode_id = models.IntegerField(blank=True, null=True)
     
     user_agent = models.CharField(max_length=128)
     ip_address = models.CharField(max_length=16)
     device = models.CharField(max_length=64)
-
-    duration = models.PositiveIntegerField()
+    # age_group
+    # gender
+    duration = models.PositiveIntegerField(default=10)
 
     class Meta:
         verbose_name = "История просмотра"

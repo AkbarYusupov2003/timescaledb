@@ -3,6 +3,16 @@ from django.contrib import admin
 from statistic import models
 
 
+@admin.register(models.ContentHour)
+class ContentHourAdmin(admin.ModelAdmin):
+    list_display = ("watched_users_count", "watched_duration")
+
+
+@admin.register(models.BroadcastHour)
+class BroadcastHourAdmin(admin.ModelAdmin):
+    list_display = ("watched_users_count", "watched_duration")
+
+
 @admin.register(models.Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("pk", "sub_id", "count", "time")
@@ -15,4 +25,4 @@ class RegisterAdmin(admin.ModelAdmin):
 
 @admin.register(models.History)
 class HistoryAdmin(admin.ModelAdmin):
-    list_display = ("content_id", "broadcast_id", "episode_id", "ip_address", "user_agent", "device", )
+    list_display = ("slug", "content_id", "broadcast_id", "episode_id", "ip_address", "device", "time")

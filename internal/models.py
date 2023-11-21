@@ -53,18 +53,23 @@ class Content(models.Model):
     title_en = models.CharField(max_length=255, blank=True)
     title_uz = models.CharField(max_length=255, blank=True)
     #
-    content_id = models.PositiveIntegerField()
-    episode_id = models.PositiveIntegerField(null=True, blank=True)
+    content_id = models.PositiveIntegerField(unique=True)
+    episode_id = models.PositiveIntegerField(unique=True, null=True, blank=True)
     #
     is_russian = models.BooleanField(default=True)
-    category = models.ForeignKey(Category, on_delete=models.PROTECT)
-    sponsors = models.ManyToManyField(Sponsor)
-    allowed_subscriptions = models.ManyToManyField(AllowedSubscription)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True, blank=True)
+    sponsors = models.ManyToManyField(Sponsor, blank=True)
+    allowed_subscriptions = models.ManyToManyField(AllowedSubscription, blank=True)
     #
-    duration = models.PositiveIntegerField()
-    slug = models.SlugField(unique=True) # TODO IS SLUG REQUIRED?
-    year = models.PositiveSmallIntegerField(blank=True)
+    duration = models.PositiveIntegerField(null=True, blank=True)
+    slug = models.SlugField(unique=True)
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
     
     class Meta:
         verbose_name = "Контент"
         verbose_name_plural = "Контенты"
+
+
+# class Broadcast(models.Model):
+#     channel_name = 1
+    

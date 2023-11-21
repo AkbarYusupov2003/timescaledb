@@ -14,19 +14,53 @@ from statistic import models
 from internal.models import AllowedSubscription, AllowedPeriod, Content
 
 
-# http://127.0.0.1:8000/subscriptions-stat/?period=day&from_date=2023-12-16+00:00:00.000Z&to_date=2023-12-17+00:00:00.000Z&sub_type=1
+# Subscription: http://127.0.0.1:8000/subscriptions-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17&sub_id=1
 
-# TODO доделать
+# Register: http://127.0.0.1:8000/register-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
+
+# class CreateHistoryAPIView(APIView):
+    
+    # def post(self, request, *args, **kwargs):
+    #     try:
+    #         content_id = int(request.data.get('content_id', 0))
+    #         broadcast_id = int(request.data.get('broadcast_id', 0))
+    #         episode_id = int(request.data.get('episode_id', 0))
+    #     except:
+    #         return Response(status=400)
+        
+    #     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    #     if x_forwarded_for:
+    #         ip_address = x_forwarded_for.split(',')[-1].strip()
+    #     else:
+    #         ip_address = request.META.get('REMOTE_ADDR')
+
+    #     user_agent = request.META.get('HTTP_USER_AGENT', '')
+    #     device = "device" # self.request.auth.payload.get("device", "not available")
+    #     data = {"ip_address": ip_address, "user_agent": user_agent, "device": device, "time": datetime.datetime.now()}
+    #     if content_id:
+    #         data["content_id"] = content_id
+    #         if episode_id:
+    #             data["episode_id"] = episode_id
+    #     elif broadcast_id:
+    #         data["broadcast_id"] = broadcast_id
+    #     else:
+    #         return Response(status=400)
+            
+    #     models.History.objects.create(**data)
+    #     return Response("Ok")
+
+
 class CreateHistoryAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
+        print("create history")
         try:
             content_id = int(request.data.get('content_id', 0))
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
         except:
             return Response(status=400)
-        
+
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             ip_address = x_forwarded_for.split(',')[-1].strip()
@@ -40,12 +74,17 @@ class CreateHistoryAPIView(APIView):
             data["content_id"] = content_id
             if episode_id:
                 data["episode_id"] = episode_id
+                data["slug"] = f"{content_id}_{episode_id}"
+            else:
+                data["slug"] = str(content_id)
         elif broadcast_id:
             data["broadcast_id"] = broadcast_id
+            data["slug"] = str(broadcast_id)
         else:
             return Response(status=400)
-            
+        print("data: ", data)
         models.History.objects.create(**data)
+        print("create history ended")
         return Response("Ok")
 
 
@@ -91,7 +130,7 @@ class RegisterListAPIView(APIView):
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format)
-        except:
+        except Exception as e:
             return []
         # -----------
         cursor = connection.cursor()

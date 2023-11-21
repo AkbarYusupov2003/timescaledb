@@ -8,7 +8,6 @@ from config.yasg import urlpatterns as yasg_urls
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("api.urls", namespace="api")),
-    path("__debug__/", include("debug_toolbar.urls")),
 ]
 
 urlpatterns.extend(yasg_urls)
