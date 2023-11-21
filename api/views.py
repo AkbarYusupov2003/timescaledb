@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 
 from api import serializers
+from api import utils
 from statistic import models
 from internal.models import AllowedSubscription, AllowedPeriod, Content
 
@@ -58,7 +59,10 @@ class CreateHistoryAPIView(APIView):
             content_id = int(request.data.get('content_id', 0))
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
-        except:
+            gender = "M" # self.request.auth.payload.get("gender")
+            age = utils.get_group_by_age(19) # self.request.auth.payload.get("age")
+        except Exception as e:
+            print("Exception: ", e)
             return Response(status=400)
 
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -68,8 +72,12 @@ class CreateHistoryAPIView(APIView):
             ip_address = request.META.get('REMOTE_ADDR')
 
         user_agent = request.META.get('HTTP_USER_AGENT', '')
-        device = "device" # self.request.auth.payload.get("device", "not available")
-        data = {"ip_address": ip_address, "user_agent": user_agent, "device": device, "time": datetime.datetime.now()}
+
+        device = "device" # self.request.auth.payload.get("device")
+        data = {
+            "ip_address": ip_address, "user_agent": user_agent, "device": device, 
+            "time": datetime.datetime.now(), "gender": gender, "age_group": age
+        }
         if content_id:
             data["content_id"] = content_id
             if episode_id:

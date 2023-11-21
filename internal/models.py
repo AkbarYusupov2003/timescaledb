@@ -48,6 +48,19 @@ class Category(models.Model):
         verbose_name_plural = "Категории"
 
 
+class BroadcastCategory(models.Model):
+    title_ru = models.CharField(max_length=255, null=True)
+    title_en = models.CharField(max_length=255, null=True)
+    title_uz = models.CharField(max_length=255, null=True)
+
+    def __str__(self):
+        return self.title_ru
+
+    class Meta:
+        verbose_name = ""
+        verbose_name_plural = ""
+
+
 class Content(models.Model):
     title_ru = models.CharField(max_length=255)
     title_en = models.CharField(max_length=255, blank=True)
@@ -70,6 +83,16 @@ class Content(models.Model):
         verbose_name_plural = "Контенты"
 
 
-# class Broadcast(models.Model):
-#     channel_name = 1
+class Broadcast(models.Model):
+    title = models.CharField(max_length=255, null=True)
+    quality = models.CharField(max_length=255, null=True)
+    broadcast_id = models.PositiveBigIntegerField(unique=True)
+    category = models.ForeignKey(BroadcastCategory, on_delete=models.CASCADE, null=True)
+    allowed_subscriptions = models.ManyToManyField(AllowedSubscription, blank=True)
+
+    def __str__(self):
+        return self.title
     
+    class Meta:
+        verbose_name = "Контент"
+        verbose_name_plural = "Контенты"

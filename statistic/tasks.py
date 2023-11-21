@@ -1,5 +1,6 @@
 import datetime
 from django.db import connection
+from django.db.models import F
 from celery import shared_task
 from celery.schedules import crontab
 
@@ -28,36 +29,35 @@ def hourly_subscription_task():
             models.Subscription.objects.create(sub_id=key, count=value, time=time)
 
 
-def hourly_content_history_task():
+def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(hours=1)
-    
-    print("TIME: ", from_time, to_time)
-
     histories = models.History.objects.filter(
         time__range=(from_time, to_time),
     ) #.annotate(a=Sum("duration"))
-    
-    # histories.filter(contend_id__isnull=False)
-    
+    print("TIME: ", from_time, to_time)
+    print("histories", histories)
     for history in histories:
+        print("history gender", history.gender)
         try:
             if history.content_id:
-                print("history content", history.content_id, history.episode_id)
-                content = Content.objects.get(
+                if Content.objects.get(
                     content_id=history.content_id, episode_id=history.episode_id
-                )
-                print("Content: ", content)
-                # add history to contenthour
-                models.ContentHour.objects.get_or_create
-                
+                ):
+                    content, _ = models.ContentHour.objects.get_or_create(
+                        time=from_time, content_id=history.content_id, episode_id=history.episode_id
+                    )
+                    content.age_group[str(history.age_group)] += 1
+                    content.gender[history.gender] += 1
+                    content.watched_users_count = F("watched_users_count") + 1
+                    content.watched_duration = F("watched_duration") + history.duration
+                    content.save()
             elif history.broadcast_id:
                 print("history broadcast", history.broadcast_id)
-        except:
-            print("Exception")
-        
-    print("histories", histories)  
-    
+                # if Broadcast
+        except Exception as e:
+            print("Exception", e)
+
     # cursor = connection.cursor()
     # cursor.execute(
     #     f"""

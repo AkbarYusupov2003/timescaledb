@@ -5,12 +5,12 @@ from statistic import models
 
 @admin.register(models.ContentHour)
 class ContentHourAdmin(admin.ModelAdmin):
-    list_display = ("watched_users_count", "watched_duration")
+    list_display = ("content_id", "episode_id", "watched_users_count", "watched_duration")
 
 
 @admin.register(models.BroadcastHour)
 class BroadcastHourAdmin(admin.ModelAdmin):
-    list_display = ("watched_users_count", "watched_duration")
+    list_display = ("broadcast_id", "watched_users_count", "watched_duration")
 
 
 @admin.register(models.Subscription)
