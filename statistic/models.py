@@ -53,6 +53,7 @@ class ContentMonth(TimescaleModel):
         verbose_name_plural = "Контенты за месяц"
         db_table = "statistic_content_month"
 
+
 # Broadcast Statistic
 class BroadcastHour(TimescaleModel):
     broadcast_id = models.PositiveIntegerField()
