@@ -68,7 +68,33 @@ class BroadcastHour(TimescaleModel):
         db_table = "statistic_broadcast_hour"
 
 
-#
+class BroadcastDay(TimescaleModel):
+    broadcast_id = models.PositiveIntegerField()
+    watched_users_count = models.PositiveIntegerField(default=0)
+    watched_duration = models.PositiveIntegerField(default=0)
+    age_group = models.JSONField(default=dict, blank=True, null=True)
+    gender = models.JSONField(default=dict, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Телеканал за день"
+        verbose_name_plural = "Телеканалы за день"
+        db_table = "statistic_broadcast_day"
+
+
+class BroadcastMonth(TimescaleModel):
+    broadcast_id = models.PositiveIntegerField()
+    watched_users_count = models.PositiveIntegerField(default=0)
+    watched_duration = models.PositiveIntegerField(default=0)
+    age_group = models.JSONField(default=dict, blank=True, null=True)
+    gender = models.JSONField(default=dict, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Телеканал за месяц"
+        verbose_name_plural = "Телеканалы за месяц"
+        db_table = "statistic_broadcast_month"
+
+
+# --------------------------------------------------------------------
 class Subscription(TimescaleModel):
     sub_id = models.CharField(max_length=8)
     count = models.IntegerField()

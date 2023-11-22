@@ -84,9 +84,7 @@ def daily_history_task():
         daily = models.ContentDay.objects.create(
             time=from_time, content_id=content.content_id, episode_id=content.episode_id
         )
-        print(content.title_ru, "||||", histories)
         for history in histories:
-            print("history.age_group", history.age_group)
             daily.age_group[str(history.age_group)] = daily.age_group.get(str(history.age_group), 0) + 1
             daily.gender[str(history.gender)] = daily.gender.get(str(history.gender), 0) + 1
             daily.watched_users_count += 1
@@ -96,9 +94,7 @@ def daily_history_task():
     dailies = models.ContentDay.objects.filter(
         time=from_time
     )
-    print("\n\n\n")
     for daily in dailies:
-        print("daily duration", daily.watched_duration)
         monthly, _ = models.ContentMonth.objects.get_or_create(
             time=from_time, content_id=daily.content_id, episode_id=daily.episode_id
         )
@@ -108,9 +104,23 @@ def daily_history_task():
         monthly.watched_duration += daily.watched_duration
         monthly.save()
     
-    # TODO broadcast daily, monthly
-
-
+    # Broadcast
+    broadcasts = Broadcast.objects.all()
+    for broadcast in broadcasts:
+        histories = models.History.objects.filter(
+            time__range=(from_time, to_time), broadcast_id=broadcast.broadcast_id
+        )
+        daily = models.BroadcastDay.objects.create(
+            time=from_time, broadcast_id=broadcast.broadcast_id
+        )
+        for history in histories:
+            daily.age_group[str(history.age_group)] = daily.age_group.get(str(history.age_group), 0) + 1
+            daily.gender[str(history.gender)] = daily.gender.get(str(history.gender), 0) + 1
+            daily.watched_users_count += 1
+            daily.watched_duration += history.duration
+            daily.save()
+    
+    
 def synchronize_content_task():
     data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
     print("DATA: ", data)

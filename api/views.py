@@ -62,8 +62,7 @@ class CreateHistoryAPIView(APIView):
             gender = "M" # self.request.auth.payload.get("gender")
             age = utils.get_group_by_age(19) # self.request.auth.payload.get("age")
         except Exception as e:
-            print("Exception: ", e)
-            return Response(status=400)
+            return Response({"Error": e}, status=400)
 
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -89,7 +88,7 @@ class CreateHistoryAPIView(APIView):
             data["broadcast_id"] = broadcast_id
             data["slug"] = str(broadcast_id)
         else:
-            return Response(status=400)
+            return Response({"error": "id validation"}, status=400)
         print("data: ", data)
         models.History.objects.create(**data)
         print("create history ended")
@@ -108,32 +107,36 @@ class ContentListAPIView(generics.GenericAPIView):
         from_date = self.request.GET.get("from_date")
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
-        sub_id = 1 # TODO filter Content.allowed_subscription
-        # validation
-        # filter by watched_users, watched_duration
-        sponsors = 1
-        ordering = self.request.GET.get("ordering") # watched_users, watched_duration, content_duration, id, title
+        sub_id = self.request.GET.get("period") # TODO ADD
+        sponsors = 1 # TODO ADD
+        ordering = self.request.GET.get("ordering") # TODO ADD
         allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
-        
+        allowed_orderings = ("watched_users", "watched_duration", "content_duration", "id", "title")
+        allowed_subscriptions = AllowedSubscription.objects.all().values_list("sub_id", flat=True)
+
         if not(period in allowed_periods):
-            print(1)
-            return Response(status=400)
-        
+            return Response({"error": "period validation"}, status=400)
+
+        # if not(sub_id in allowed_subscriptions):
+        #     return Response({"error": "sub_id validation"}, status=400)
+
+        # if not(ordering in allowed_orderings):
+        #     return Response({"error": "ordering validation"}, status=400)
+
         try:
             date_format = "%Y-%m-%d-%H:%M"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format)
             if period == "hours":
                 table_name = "statistic_content_hour"
-            elif period == "days":
+            elif period == "day":
                 table_name = "statistic_content_day"
             elif period == "month":
                 table_name = "statistic_content_month"
             else:
-                return Response(status=400)
+                return Response({"error": "period validation"}, status=400)
         except Exception as e:
-            print(2, e)
-            return Response(status=400)
+            return Response({"error": e}, status=400)
         # -----------
 
         queryset = self.get_queryset()
