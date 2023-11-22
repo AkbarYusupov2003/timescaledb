@@ -120,17 +120,14 @@ class ContentListAPIView(generics.GenericAPIView):
             return Response(status=400)
         
         try:
+            date_format = "%Y-%m-%d-%H:%M"
+            from_date = datetime.datetime.strptime(from_date, date_format)
+            to_date = datetime.datetime.strptime(to_date, date_format)
             if period == "hours":
-                date_format = "%Y-%m-%d-%H:%M" #:%S
-                from_date = datetime.datetime.strptime(from_date, date_format)
-                to_date = datetime.datetime.strptime(to_date, date_format)
-                print(from_date, "||",to_date)
                 table_name = "statistic_content_hour"
             elif period == "days":
-                set_date = 2
                 table_name = "statistic_content_day"
             elif period == "month":
-                set_date = 3
                 table_name = "statistic_content_month"
             else:
                 return Response(status=400)
@@ -154,13 +151,11 @@ class ContentListAPIView(generics.GenericAPIView):
                 """
             )
             stat =  cursor.fetchone()
-            age_group = models.get_default_age_group()
-            gender = models.get_default_gender()
 
             content = self.serializer_class(content).data
             print("content", content, type(content))
             content.update({
-                "watched_users": 0, "watched_duration": 0, "age_group": age_group, "gender": gender
+                "watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {} # "age_group": age_group, "gender": gender
             })
             if stat:
                 content["watched_users"] = stat[1]

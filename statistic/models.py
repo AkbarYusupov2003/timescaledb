@@ -11,21 +11,14 @@ class TimescaleModel(models.Model):
         abstract = True
 
 
-def get_default_age_group():
-    return {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0}
-
-
-def get_default_gender():
-    return {"M": 0, "W": 0}
-
 # Content Statistic
 class ContentHour(TimescaleModel):
     content_id = models.IntegerField()
     episode_id = models.IntegerField(blank=True, null=True)
     watched_users_count = models.PositiveIntegerField(default=0)
     watched_duration = models.PositiveIntegerField(default=0)
-    age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
-    gender = models.JSONField(default=get_default_gender, blank=True, null=True)
+    age_group = models.JSONField(default=dict, blank=True, null=True)
+    gender = models.JSONField(default=dict, blank=True, null=True)
 
     class Meta:
         verbose_name = "Контент за час"
@@ -38,8 +31,8 @@ class ContentDay(TimescaleModel):
     episode_id = models.IntegerField(blank=True, null=True)
     watched_users_count = models.PositiveIntegerField(default=0)
     watched_duration = models.PositiveIntegerField(default=0)
-    age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
-    gender = models.JSONField(default=get_default_gender, blank=True, null=True)
+    age_group = models.JSONField(default=dict, blank=True, null=True)
+    gender = models.JSONField(default=dict, blank=True, null=True)
 
     class Meta:
         verbose_name = "Контент за день"
@@ -52,8 +45,8 @@ class ContentMonth(TimescaleModel):
     episode_id = models.IntegerField(blank=True, null=True)
     watched_users_count = models.PositiveIntegerField(default=0)
     watched_duration = models.PositiveIntegerField(default=0)
-    age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
-    gender = models.JSONField(default=get_default_gender, blank=True, null=True)
+    age_group = models.JSONField(default=dict, blank=True, null=True)
+    gender = models.JSONField(default=dict, blank=True, null=True)
 
     class Meta:
         verbose_name = "Контент за месяц"
@@ -65,8 +58,8 @@ class BroadcastHour(TimescaleModel):
     broadcast_id = models.PositiveIntegerField()
     watched_users_count = models.PositiveIntegerField(default=0)
     watched_duration = models.PositiveIntegerField(default=0)
-    age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
-    gender = models.JSONField(default=get_default_gender, blank=True, null=True)
+    age_group = models.JSONField(default=dict, blank=True, null=True)
+    gender = models.JSONField(default=dict, blank=True, null=True)
     
     class Meta:
         verbose_name = "Телеканал за час"

@@ -1,4 +1,5 @@
 import datetime
+from collections import Counter
 from django.db import connection
 from django.db.models import F
 from celery import shared_task
@@ -47,8 +48,8 @@ def hourly_history_task():
                     content, _ = models.ContentHour.objects.get_or_create(
                         time=to_time, content_id=history.content_id, episode_id=history.episode_id
                     )
-                    content.age_group[str(history.age_group)] += 1
-                    content.gender[history.gender] += 1
+                    content.age_group[str(history.age_group)] = content.age_group.get(str(history.age_group), 0) + 1
+                    content.gender[str(history.gender)] = content.gender.get(str(history.gender), 0) + 1
                     content.watched_users_count += 1
                     content.watched_duration += history.duration
                     content.save()
@@ -59,8 +60,8 @@ def hourly_history_task():
                     broadcast, _ = models.BroadcastHour.objects.get_or_create(
                         time=to_time, broadcast_id=history.broadcast_id,
                     )
-                    broadcast.age_group[str(history.age_group)] += 1
-                    broadcast.gender[history.gender] += 1
+                    broadcast.age_group[str(history.age_group)] = broadcast.age_group.get(str(history.age_group), 0) + 1
+                    broadcast.gender[str(history.gender)] = broadcast.gender.get(str(history.gender), 0) + 1
                     broadcast.watched_users_count+= 1
                     broadcast.watched_duration += history.duration
                     broadcast.save()
@@ -74,11 +75,8 @@ def daily_history_task():
     # from_time = to_time - datetime.timedelta(days=1)
     from_time = datetime.date.today()
     to_time = from_time + datetime.timedelta(days=1)
-    print("time", from_time, to_time)
     
     contents = Content.objects.all()
-    print("contents: ", contents)
-    
     for content in contents:
         histories = models.History.objects.filter(
             time__range=(from_time, to_time), content_id=content.content_id, episode_id=content.episode_id
@@ -89,8 +87,8 @@ def daily_history_task():
         print(content.title_ru, "||||", histories)
         for history in histories:
             print("history.age_group", history.age_group)
-            daily.age_group[str(history.age_group)] += 1
-            daily.gender[history.gender] += 1
+            daily.age_group[str(history.age_group)] = daily.age_group.get(str(history.age_group), 0) + 1
+            daily.gender[str(history.gender)] = daily.gender.get(str(history.gender), 0) + 1
             daily.watched_users_count += 1
             daily.watched_duration += history.duration
             daily.save()
@@ -104,8 +102,8 @@ def daily_history_task():
         monthly, _ = models.ContentMonth.objects.get_or_create(
             time=from_time, content_id=daily.content_id, episode_id=daily.episode_id
         )
-        monthly.age_group.update(daily.age_group)
-        monthly.gender.update(daily.gender)
+        monthly.age_group = dict(Counter(monthly.age_group) + Counter(daily.age_group))
+        monthly.gender = dict(Counter(monthly.gender) + Counter(daily.gender))
         monthly.watched_users_count += daily.watched_users_count
         monthly.watched_duration += daily.watched_duration
         monthly.save()
