@@ -18,7 +18,7 @@ def get_default_age_group():
 def get_default_gender():
     return {"M": 0, "W": 0}
 
-
+# Content Statistic
 class ContentHour(TimescaleModel):
     content_id = models.IntegerField()
     episode_id = models.IntegerField(blank=True, null=True)
@@ -26,12 +26,41 @@ class ContentHour(TimescaleModel):
     watched_duration = models.PositiveIntegerField(default=0)
     age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
     gender = models.JSONField(default=get_default_gender, blank=True, null=True)
-    
+
     class Meta:
         verbose_name = "Контент за час"
         verbose_name_plural = "Контенты за час"
+        db_table = "statistic_content_hour"
 
 
+class ContentDay(TimescaleModel):
+    content_id = models.IntegerField()
+    episode_id = models.IntegerField(blank=True, null=True)
+    watched_users_count = models.PositiveIntegerField(default=0)
+    watched_duration = models.PositiveIntegerField(default=0)
+    age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
+    gender = models.JSONField(default=get_default_gender, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Контент за день"
+        verbose_name_plural = "Контенты за день"
+        db_table = "statistic_content_day"
+
+
+class ContentMonth(TimescaleModel):
+    content_id = models.IntegerField()
+    episode_id = models.IntegerField(blank=True, null=True)
+    watched_users_count = models.PositiveIntegerField(default=0)
+    watched_duration = models.PositiveIntegerField(default=0)
+    age_group = models.JSONField(default=get_default_age_group, blank=True, null=True)
+    gender = models.JSONField(default=get_default_gender, blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Контент за месяц"
+        verbose_name_plural = "Контенты за месяц"
+        db_table = "statistic_content_month"
+
+# Broadcast Statistic
 class BroadcastHour(TimescaleModel):
     broadcast_id = models.PositiveIntegerField()
     watched_users_count = models.PositiveIntegerField(default=0)
@@ -42,8 +71,10 @@ class BroadcastHour(TimescaleModel):
     class Meta:
         verbose_name = "Телеканал за час"
         verbose_name_plural = "Телеканалы за час"
+        db_table = "statistic_broadcast_hour"
 
 
+#
 class Subscription(TimescaleModel):
     sub_id = models.CharField(max_length=8)
     count = models.IntegerField()
@@ -51,6 +82,7 @@ class Subscription(TimescaleModel):
     class Meta:
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
+        db_table = "statistic_subscription"
 
 
 class Register(TimescaleModel):    
@@ -59,6 +91,7 @@ class Register(TimescaleModel):
     class Meta:
         verbose_name = "Регистрация"
         verbose_name_plural = "Регистрации"
+        db_table = "statistic_register"
 
 
 class History(TimescaleModel):
@@ -96,3 +129,4 @@ class History(TimescaleModel):
     class Meta:
         verbose_name = "История просмотра"
         verbose_name_plural = "Истории просмотров"
+        db_table = "statistic_history"

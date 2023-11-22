@@ -108,8 +108,11 @@ class ContentListAPIView(generics.GenericAPIView):
         from_date = self.request.GET.get("from_date")
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
-        sub_id = 1 # TODO
+        sub_id = 1 # TODO filter Content.allowed_subscription
         # validation
+        # filter by watched_users, watched_duration
+        sponsors = 1
+        ordering = self.request.GET.get("ordering") # watched_users, watched_duration, content_duration, id, title
         allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
         
         if not(period in allowed_periods):
@@ -117,45 +120,54 @@ class ContentListAPIView(generics.GenericAPIView):
             return Response(status=400)
         
         try:
-            date_format = "%Y-%m-%d"
-            from_date = datetime.datetime.strptime(from_date, date_format)
-            to_date = datetime.datetime.strptime(to_date, date_format)
-        except:
-            print(2)
+            if period == "hours":
+                date_format = "%Y-%m-%d-%H:%M" #:%S
+                from_date = datetime.datetime.strptime(from_date, date_format)
+                to_date = datetime.datetime.strptime(to_date, date_format)
+                print(from_date, "||",to_date)
+                table_name = "statistic_content_hour"
+            elif period == "days":
+                set_date = 2
+                table_name = "statistic_content_day"
+            elif period == "month":
+                set_date = 3
+                table_name = "statistic_content_month"
+            else:
+                return Response(status=400)
+        except Exception as e:
+            print(2, e)
             return Response(status=400)
         # -----------
-        
+
         queryset = self.get_queryset()
         res = []
-        
+
         for content in queryset:
             cursor = connection.cursor()
-            print("EPISODE", content.episode_id)
             cursor.execute(
                 f"""
                     SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
-                    FROM statistic_contenthour
+                    FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
-                          (content_id = '{content.content_id}')   
+                          (content_id = '{content.content_id}')
                           {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
                 """
             )
-            r =  cursor.fetchall()
-            users = duration = 0
-            age_group = {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0}
-            gender = {"M": 0, "W": 0}
-            for x in r:
-                users += x[1]
-                duration += x[2]
-                age_group.update(x[3])
-                gender.update(x[4])
-                
+            stat =  cursor.fetchone()
+            age_group = models.get_default_age_group()
+            gender = models.get_default_gender()
+
             content = self.serializer_class(content).data
-            content["watched_users"] = users
-            content["watched_duration"] = duration
-            content["age_group"] = age_group
-            content["gender"] = gender
-            
+            print("content", content, type(content))
+            content.update({
+                "watched_users": 0, "watched_duration": 0, "age_group": age_group, "gender": gender
+            })
+            if stat:
+                content["watched_users"] = stat[1]
+                content["watched_duration"] = stat[2]
+                content["age_group"] = stat[3]
+                content["gender"] = stat[4]
+
             res.append(content)
 
         return Response(res, status=200)

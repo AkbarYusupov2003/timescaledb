@@ -29,44 +29,88 @@ def hourly_subscription_task():
             models.Subscription.objects.create(sub_id=key, count=value, time=time)
 
 
+@shared_task(name='hourly-history-task')
 def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(hours=1)
     histories = models.History.objects.filter(
         time__range=(from_time, to_time),
     )
-    print("TIME: ", from_time, to_time)
-    print("histories", histories)
+    print("Histories", histories, from_time, to_time)
     for history in histories:
         try:
             if history.content_id:
-                print("content", history.content_id, history.episode_id)
                 if etc.exists_or_create(
                     {"content_id": history.content_id, "episode_id": history.episode_id},
                     history.slug
                 ):
                     content, _ = models.ContentHour.objects.get_or_create(
-                        time=from_time, content_id=history.content_id, episode_id=history.episode_id
+                        time=to_time, content_id=history.content_id, episode_id=history.episode_id
                     )
                     content.age_group[str(history.age_group)] += 1
                     content.gender[history.gender] += 1
-                    content.watched_users_count = F("watched_users_count") + 1
-                    content.watched_duration = F("watched_duration") + history.duration
+                    content.watched_users_count += 1
+                    content.watched_duration += history.duration
                     content.save()
             elif history.broadcast_id:
                 if Broadcast.objects.get(
                     broadcast_id=history.broadcast_id
                 ):
                     broadcast, _ = models.BroadcastHour.objects.get_or_create(
-                        time=from_time, broadcast_id=history.broadcast_id,
+                        time=to_time, broadcast_id=history.broadcast_id,
                     )
                     broadcast.age_group[str(history.age_group)] += 1
                     broadcast.gender[history.gender] += 1
-                    broadcast.watched_users_count = F("watched_users_count") + 1
-                    broadcast.watched_duration = F("watched_duration") + history.duration
+                    broadcast.watched_users_count+= 1
+                    broadcast.watched_duration += history.duration
                     broadcast.save()
         except Exception as e:
             print("Exception", e)
+
+
+@shared_task(name='daily-history-task')
+def daily_history_task():
+    # to_time = datetime.date.today()
+    # from_time = to_time - datetime.timedelta(days=1)
+    from_time = datetime.date.today()
+    to_time = from_time + datetime.timedelta(days=1)
+    print("time", from_time, to_time)
+    
+    contents = Content.objects.all()
+    print("contents: ", contents)
+    
+    for content in contents:
+        histories = models.History.objects.filter(
+            time__range=(from_time, to_time), content_id=content.content_id, episode_id=content.episode_id
+        )
+        daily = models.ContentDay.objects.create(
+            time=from_time, content_id=content.content_id, episode_id=content.episode_id
+        )
+        print(content.title_ru, "||||", histories)
+        for history in histories:
+            print("history.age_group", history.age_group)
+            daily.age_group[str(history.age_group)] += 1
+            daily.gender[history.gender] += 1
+            daily.watched_users_count += 1
+            daily.watched_duration += history.duration
+            daily.save()
+
+    dailies = models.ContentDay.objects.filter(
+        time=from_time
+    )
+    print("\n\n\n")
+    for daily in dailies:
+        print("daily duration", daily.watched_duration)
+        monthly, _ = models.ContentMonth.objects.get_or_create(
+            time=from_time, content_id=daily.content_id, episode_id=daily.episode_id
+        )
+        monthly.age_group.update(daily.age_group)
+        monthly.gender.update(daily.gender)
+        monthly.watched_users_count += daily.watched_users_count
+        monthly.watched_duration += daily.watched_duration
+        monthly.save()
+    
+    # TODO broadcast daily, monthly
 
 
 def synchronize_content_task():
@@ -75,6 +119,15 @@ def synchronize_content_task():
 
 
 app.conf.beat_schedule = {
+    'daily-history-task': {
+        'task': 'hourly-register-task',
+        'schedule': crontab(minute='5', hour='0'),
+    },
+    'hourly-history-task': {
+        'task': 'hourly-history-task',
+        'schedule': crontab(minute='0', hour='*'),
+    },
+    #
     'hourly-register-task': {
         'task': 'hourly-register-task',
         'schedule': crontab(minute='1', hour='*'),

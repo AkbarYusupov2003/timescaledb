@@ -66,8 +66,8 @@ class Content(models.Model):
     title_en = models.CharField(max_length=255, blank=True)
     title_uz = models.CharField(max_length=255, blank=True)
     #
-    content_id = models.PositiveIntegerField(unique=True)
-    episode_id = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    content_id = models.PositiveIntegerField()
+    episode_id = models.PositiveIntegerField(null=True, blank=True)
     #
     is_russian = models.BooleanField(default=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True, blank=True)
@@ -81,6 +81,7 @@ class Content(models.Model):
     class Meta:
         verbose_name = "Контент"
         verbose_name_plural = "Контенты"
+        unique_together = ("content_id", "episode_id")
 
 
 class Broadcast(models.Model):
