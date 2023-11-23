@@ -24,3 +24,7 @@ urlpatterns = [
     path("subscriptions-stat/total/", views.SubscriptionTotalStatAPIView.as_view()),
     #
 ]
+
+# Report
+# Content, Broadcast detail
+# Add broadcast-stat

@@ -1,9 +1,7 @@
 import json
 import datetime
-from django.views import View
 from django.db import connection
-from django.db.models import Sum
-from django.shortcuts import HttpResponse
+from django.db.models import Sum, Q
 from rest_framework import generics, permissions, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,7 +10,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from api import serializers
 from api import utils
 from statistic import models
-from internal import models as internal_models # AllowedSubscription, AllowedPeriod, Category, Content
+from internal import models as internal_models
 
 
 # Content: http://127.0.0.1:8000/content-stat/?period=day&from_date=2023-11-22-0:00&to_date=2023-11-30-00:00
@@ -127,14 +125,15 @@ class ContentStatAPIView(generics.GenericAPIView):
     pagination_class = LimitOffsetPagination
     
     def get(self, request, *args, **kwargs):
-        from_date = self.request.GET.get("from_date")
-        to_date = self.request.GET.get("to_date")
-        period = self.request.GET.get("period")
-        sub_id = self.request.GET.get("sub_id")
-        sponsors = self.request.GET.get("sponsors", "")
-        category = self.request.GET.get("category")
-        is_russian = self.request.GET.get("is_russian")
-        ordering = self.request.GET.get("ordering")
+        from_date = request.GET.get("from_date")
+        to_date = request.GET.get("to_date")
+        period = request.GET.get("period")
+        search = request.GET.get("search")
+        sub_id = request.GET.get("sub_id")
+        sponsors = request.GET.get("sponsors", "")
+        category = request.GET.get("category")
+        is_russian = request.GET.get("is_russian")
+        ordering = request.GET.get("ordering")
         # ------------------------------------------------------------------------------------------
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
         allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
@@ -145,9 +144,12 @@ class ContentStatAPIView(generics.GenericAPIView):
             offset = int(request.GET.get("offset", 0))
         except:
             return Response({"error": "limit, offset validation"}, status=400)
-        
+
         if not(period in allowed_periods):
             return Response({"error": "period validation"}, status=400)
+
+        if search:
+            qs_filter["title_ru__icontains"] = search
 
         if sub_id:
             if sub_id in allowed_subscriptions:
