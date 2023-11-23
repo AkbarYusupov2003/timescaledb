@@ -164,7 +164,9 @@ class Report(models.Model):
     group = models.CharField(max_length=128)
     lines_count = models.PositiveIntegerField(null=True, blank=True)
     data = models.JSONField(default=dict, blank=True, null=True)
-    file = models.FileField(null=True, blank=True)
+    file = models.FileField(
+        upload_to="reports/%Y/%m/%d", null=True, blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

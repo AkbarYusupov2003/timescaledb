@@ -59,7 +59,7 @@ class SubscriptionListAPIView(generics.ListAPIView):
     queryset = internal_models.AllowedSubscription.objects.all()
     serializer_class = serializers.AllowedSubscriptionSerializer
 
-        
+
 class CategoryListAPIView(generics.ListAPIView):
     queryset = internal_models.Category.objects.all()
     serializer_class = serializers.CategorySerializer
@@ -212,7 +212,6 @@ class ContentStatAPIView(generics.GenericAPIView):
                 """
             )
             stat =  cursor.fetchone()
-
             content = self.serializer_class(content).data
             content.update({"watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {}})
             if stat:
@@ -220,7 +219,6 @@ class ContentStatAPIView(generics.GenericAPIView):
                 content["watched_duration"] = stat[2]
                 content["age_group"] = stat[3]
                 content["gender"] = stat[4]
-            
             res.append(content)
 
         if ordering == "watched_users":
@@ -238,23 +236,21 @@ class ContentStatAPIView(generics.GenericAPIView):
 # Register
 class RegisterStatAPIView(APIView):
     serializer_class = serializers.RegisterSerializer
-    
-    def get_queryset(self):
+        
+    def get(self, request, *args, **kwargs):
         from_date = self.request.GET.get("from_date")
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
         # validation
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
-        
         if not(period in allowed_periods):
-            return []
-        
+            return Response({"error": "period validation"}, status=400)
         try:
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format)
         except:
-            return []
+            return Response({"error": "date validation"}, status=400)
         # -----------
         cursor = connection.cursor()
         cursor.execute(
@@ -266,10 +262,7 @@ class RegisterStatAPIView(APIView):
                 ORDER BY interval DESC;
             """
         )
-        return cursor.fetchall()
-        
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = cursor.fetchall()
         res = self.serializer_class(queryset, many=True)
         return Response(res.data, status=200)
 
@@ -302,7 +295,7 @@ class RegisterTotalStatAPIView(APIView):
 class SubscriptionStatAPIView(APIView):
     serializer_class = serializers.SubscriptionSerializer
 
-    def get_queryset(self):
+    def get(self, request, *args, **kwargs):
         from_date = self.request.GET.get("from_date")
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
@@ -310,21 +303,17 @@ class SubscriptionStatAPIView(APIView):
         # validation
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
         allowed_subs = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
-
         if not(period in allowed_periods):
-            return []
-        
+            return Response({"error": "period validation"}, status=400)
         if sub_id and not(sub_id in allowed_subs):
-            return []
-        
+            return Response({"error": "sub_id validation"}, status=400)
         try:
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format)
         except:
-            return []
+            return Response({"error": "date validation"}, status=400)
         # -----------
-
         cursor = connection.cursor()
         cursor.execute(
             f"""
@@ -335,11 +324,7 @@ class SubscriptionStatAPIView(APIView):
                 ORDER BY interval DESC;
             """
         )
-        return cursor.fetchall()
-
-
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = cursor.fetchall()
         res = self.serializer_class(queryset, many=True)
         return Response(res.data, status=200)
 
@@ -366,7 +351,8 @@ class SubscriptionTotalStatAPIView(APIView):
         res = {"total": total if total else 0, "today": today[1] if today else 0}
         return Response(res, status=200)
 
-
+# TODO 
+# Report
 class ReportCreateView(APIView):
     # GET https://legacy.glob.uz/ru/api/v1/report/make/content?offset=0&limit=20&period=hour&page=0&search=серебро
     # allowed_reports = content, broadcast

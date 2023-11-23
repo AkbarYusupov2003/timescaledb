@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from datetime import timedelta
 
 
 try:
@@ -8,11 +10,11 @@ except:
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = 'django-insecure-%6ft#6s_w+_b$lh#c!9ec56h8o#!)!*dyyc08e!-1192sq9g%h'
+SECRET_KEY = 'django-insecure-%6ft#6s_w+_b$lh#c!9ec56h8o#!)!*dyyc08e!-1192sq9g%h' #
 
-DEBUG = True
+DEBUG = True #
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"] #
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -23,7 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # third party apps
     "rest_framework",
+    "rest_framework_simplejwt",
     "drf_yasg",
+    "corsheaders",
     # my apps
     "api",
     "internal",
@@ -33,6 +37,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -94,6 +99,24 @@ USE_I18N = True
 
 USE_TZ = False
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 STATIC_URL = 'static/'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# REST_FRAMEWORK = {
+#     'DEFAULT_PERMISSION_CLASSES': (
+#         'rest_framework.permissions.IsAuthenticated',
+#     ),
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     )
+# }
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=60),
+    "ROTATE_REFRESH_TOKENS": True
+}
