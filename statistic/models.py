@@ -95,25 +95,6 @@ class BroadcastMonth(TimescaleModel):
 
 
 # --------------------------------------------------------------------
-class Subscription(TimescaleModel):
-    sub_id = models.CharField(max_length=8)
-    count = models.IntegerField()
-    
-    class Meta:
-        verbose_name = "Подписка"
-        verbose_name_plural = "Подписки"
-        db_table = "statistic_subscription"
-
-
-class Register(TimescaleModel):    
-    count = models.IntegerField()
-
-    class Meta:
-        verbose_name = "Регистрация"
-        verbose_name_plural = "Регистрации"
-        db_table = "statistic_register"
-
-
 class History(TimescaleModel):
     
     AGE_GROUPS = (
@@ -150,3 +131,42 @@ class History(TimescaleModel):
         verbose_name = "История просмотра"
         verbose_name_plural = "Истории просмотров"
         db_table = "statistic_history"
+
+
+class Register(TimescaleModel):    
+    count = models.IntegerField()
+
+    class Meta:
+        verbose_name = "Регистрация"
+        verbose_name_plural = "Регистрации"
+        db_table = "statistic_register"
+
+
+class Subscription(TimescaleModel):
+    sub_id = models.CharField(max_length=8)
+    count = models.IntegerField()
+    
+    class Meta:
+        verbose_name = "Подписка"
+        verbose_name_plural = "Подписки"
+        db_table = "statistic_subscription"
+
+
+class Report(models.Model):
+    STATUSES = (
+        ("PENDING", "В ожидании"),
+        ("STARTED", "В исполнении"),
+        ("FAILURE", "Ошибка"),
+        ("FINISHED", "Завершен")
+    )
+
+    status = models.CharField(choices=STATUSES, default="PENDING")
+    section = models.CharField(max_length=128)
+    lines_count = models.PositiveIntegerField(null=True, blank=True)
+    data = models.JSONField(default=dict, blank=True, null=True)
+    file = models.FileField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Отчет"
+        verbose_name_plural = "Отчеты"

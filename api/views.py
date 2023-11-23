@@ -115,6 +115,7 @@ class CreateHistoryAPIView(APIView):
         print("create history ended")
         return Response("Ok")
 
+# GET https://legacy.glob.uz/ru/api/v1/report/make/content?offset=0&limit=20&period=hour&page=0&search=серебро
 
 # Content
 class ContentStatAPIView(generics.GenericAPIView):
