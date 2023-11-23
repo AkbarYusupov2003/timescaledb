@@ -127,8 +127,8 @@ def daily_data_update_task():
     # update broadcasts
     pass
 
-# title-Content1, gender-M, age_group-4, device_group-Table
-# title-Content1, gender-M, age_group-4, device_group-Phone
+# TODO title-Content1, gender-M, age_group-4, device_group-Table
+# TODO title-Content1, gender-M, age_group-4, device_group-Phone
 
 # # TODO
 # def synchronize_content_task():
