@@ -1,36 +1,45 @@
 from rest_framework import serializers
 
-from internal.models import Content, Category, Sponsor, AllowedSubscription
+from internal import models
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = Category
-        fields = ("title_ru",)
-
-
+# Internal
 class SponsorSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
-        model = Sponsor
-        fields = ("title",)
+        model = models.Sponsor
+        fields = ("id", "title")
 
 
 class AllowedSubscriptionSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
-        model = AllowedSubscription
-        fields = ("sub_id", )
-    
+        model = models.AllowedSubscription
+        fields = ("sub_id", "title")
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Category
+        fields = ("id", "title_ru")
+
+
+class BroadcastCategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.BroadcastCategory
+        fields = ("id", "title_ru")
+# Internal ended
+
 
 class ContentSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
     sponsors = SponsorSerializer(many=True)
     allowed_subscriptions = AllowedSubscriptionSerializer(many=True)
-    
+
     class Meta:
-        model = Content
+        model = models.Content
         fields = (
             "title_ru", "content_id", "episode_id", "is_russian", "category", 
             "sponsors", "allowed_subscriptions", "duration", "slug", "year"
@@ -41,10 +50,10 @@ class ContentSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.Serializer):
     time = serializers.SerializerMethodField(source="get_time")
     count = serializers.SerializerMethodField(source="get_count")
-    
+
     def get_time(self, obj):
         return obj[0]
-    
+
     def get_count(self, obj):
         return obj[1]
 
@@ -52,9 +61,9 @@ class RegisterSerializer(serializers.Serializer):
 class SubscriptionSerializer(serializers.Serializer):
     time = serializers.SerializerMethodField(source="get_time")
     count = serializers.SerializerMethodField(source="get_count")
-    
+
     def get_time(self, obj):
         return obj[0]
-    
+
     def get_count(self, obj):
         return obj[1]

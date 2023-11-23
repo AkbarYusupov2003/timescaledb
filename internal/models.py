@@ -3,10 +3,10 @@ from django.db import models
 
 class AllowedSubscription(models.Model):
     sub_id = models.CharField(unique=True, max_length=8)    
-    description = models.CharField(max_length=512)
+    title = models.CharField(max_length=128)
 
     def __str__(self):
-        return self.description
+        return self.title
 
     class Meta:
         verbose_name = "Разрешенная подписка"

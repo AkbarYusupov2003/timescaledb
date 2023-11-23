@@ -5,7 +5,7 @@ from internal import models
 
 @admin.register(models.AllowedSubscription)
 class AllowedSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("sub_id", "description")
+    list_display = ("sub_id", "title")
 
 
 @admin.register(models.AllowedPeriod)
@@ -24,17 +24,17 @@ class SponsorAdmin(admin.ModelAdmin):
 
 @admin.register(models.Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("title_ru", )
+    list_display = ("pk", "title_ru", )
 
 
 @admin.register(models.BroadcastCategory)
-class BroadcastAdmin(admin.ModelAdmin):
-    list_display = ("title_ru", )
+class BroadcastCategoryAdmin(admin.ModelAdmin):
+    list_display = ("pk", "title_ru", )
 
 
 @admin.register(models.Content)
 class ContentAdmin(admin.ModelAdmin):
-    list_display = ("title_ru", )
+    list_display = ("pk", "title_ru", "content_id", "episode_id", "is_russian")
 
 
 @admin.register(models.Broadcast)

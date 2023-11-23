@@ -75,7 +75,7 @@ def daily_history_task():
     # from_time = to_time - datetime.timedelta(days=1)
     from_time = datetime.date.today()
     to_time = from_time + datetime.timedelta(days=1)
-    
+
     contents = Content.objects.all()
     for content in contents:
         histories = models.History.objects.filter(
@@ -103,7 +103,7 @@ def daily_history_task():
         monthly.watched_users_count += daily.watched_users_count
         monthly.watched_duration += daily.watched_duration
         monthly.save()
-    
+
     # Broadcast
     broadcasts = Broadcast.objects.all()
     for broadcast in broadcasts:
@@ -119,8 +119,8 @@ def daily_history_task():
             daily.watched_users_count += 1
             daily.watched_duration += history.duration
             daily.save()
-    
-    
+
+
 def synchronize_content_task():
     data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
     print("DATA: ", data)

@@ -12,7 +12,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from api import serializers
 from api import utils
 from statistic import models
-from internal.models import AllowedSubscription, AllowedPeriod, Category, Content
+from internal import models as internal_models # AllowedSubscription, AllowedPeriod, Category, Content
 
 
 # Content: http://127.0.0.1:8000/content-stat/?period=day&from_date=2023-11-22-0:00&to_date=2023-11-30-00:00
@@ -51,7 +51,29 @@ from internal.models import AllowedSubscription, AllowedPeriod, Category, Conten
     #     models.History.objects.create(**data)
     #     return Response("Ok")
 
+# Internal
+class SponsorListAPIView(generics.ListAPIView):
+    queryset = internal_models.Sponsor.objects.filter(is_chosen=True)
+    serializer_class = serializers.SponsorSerializer
 
+
+class SubscriptionListAPIView(generics.ListAPIView):
+    queryset = internal_models.AllowedSubscription.objects.all()
+    serializer_class = serializers.AllowedSubscriptionSerializer
+
+        
+class CategoryListAPIView(generics.ListAPIView):
+    queryset = internal_models.Category.objects.all()
+    serializer_class = serializers.CategorySerializer
+
+
+class BroadcastCategoryListAPIView(generics.ListAPIView):
+    queryset = internal_models.BroadcastCategory.objects.all()
+    serializer_class = serializers.BroadcastCategorySerializer
+# Internal ended
+
+
+# History
 class CreateHistoryAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
@@ -97,8 +119,8 @@ class CreateHistoryAPIView(APIView):
 
 
 # Content
-class ContentListAPIView(generics.GenericAPIView):
-    queryset = Content.objects.all().select_related(
+class ContentStatAPIView(generics.GenericAPIView):
+    queryset = internal_models.Content.objects.all().select_related(
         "category"
     ).prefetch_related("sponsors", "allowed_subscriptions")
     serializer_class = serializers.ContentSerializer
@@ -114,9 +136,8 @@ class ContentListAPIView(generics.GenericAPIView):
         is_russian = self.request.GET.get("is_russian")
         ordering = self.request.GET.get("ordering")
         # ------------------------------------------------------------------------------------------
-        allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
-        allowed_subscriptions = AllowedSubscription.objects.all().values_list("sub_id", flat=True)
-        allowed_orderings = ("watched_users", "watched_duration", "content_duration", "id", "title")
+        allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
+        allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
         qs_filter = {}
 
         try:
@@ -145,10 +166,6 @@ class ContentListAPIView(generics.GenericAPIView):
         elif is_russian == "False":
             qs_filter["is_russian"] = False
 
-        if ordering:
-            if not(ordering in allowed_orderings):
-                return Response({"error": "ordering validation"}, status=400)
-
         try:
             date_format = "%Y-%m-%d-%H:%M"
             from_date = datetime.datetime.strptime(from_date, date_format)
@@ -165,8 +182,18 @@ class ContentListAPIView(generics.GenericAPIView):
             return Response({"error": e}, status=400)
 
         queryset = self.queryset.filter(**qs_filter)
-        if not qs_filter:
-            # paginate
+
+        order_after_execution = (
+            "watched_users", "-watched_users", "watched_duration", "-watched_duration"
+        )
+
+        if ordering:
+            if (ordering == "duration" or ordering == "-duration") or \
+               (ordering == "id" or ordering == "-id") or \
+               (ordering == "title" or ordering == "-title"):
+                    queryset = queryset.order_by(ordering)
+
+        if ordering not in order_after_execution:
             queryset = queryset[offset:limit+offset]
 
         res = []
@@ -185,27 +212,29 @@ class ContentListAPIView(generics.GenericAPIView):
             stat =  cursor.fetchone()
 
             content = self.serializer_class(content).data
-            print("\n\n")
-            print("content", content, type(content))
-            print("\n\n")
             content.update({"watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {}})
             if stat:
                 content["watched_users"] = stat[1]
                 content["watched_duration"] = stat[2]
                 content["age_group"] = stat[3]
                 content["gender"] = stat[4]
-            # get best 30 stats and return
+            
             res.append(content)
 
-        if qs_filter:
-            # paginate
-            pass
-        
+        if ordering == "watched_users":
+            res = sorted(res, key=lambda d: d["watched_users"])[offset:limit+offset]
+        elif ordering == "-watched_users":
+            res = sorted(res, key=lambda d: d["watched_users"], reverse=True)[offset:limit+offset]
+        elif ordering == "watched_duration":
+            res = sorted(res, key=lambda d: d["watched_duration"])[offset:limit+offset]
+        elif ordering == "-watched_duration":
+            res = sorted(res, key=lambda d: d["watched_duration"], reverse=True)[offset:limit+offset]
+
         return Response(res, status=200)
 
 
 # Register
-class RegisterListAPIView(APIView):
+class RegisterStatAPIView(APIView):
     serializer_class = serializers.RegisterSerializer
     
     def get_queryset(self):
@@ -213,7 +242,7 @@ class RegisterListAPIView(APIView):
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
         # validation
-        allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
+        allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
         
         if not(period in allowed_periods):
             return []
@@ -243,7 +272,7 @@ class RegisterListAPIView(APIView):
         return Response(res.data, status=200)
 
 
-class RegisterTotalAPIView(APIView):
+class RegisterTotalStatAPIView(APIView):
 
     def get_queryset(self):
         today = datetime.date.today()
@@ -268,7 +297,7 @@ class RegisterTotalAPIView(APIView):
 
 
 # Subscriptions
-class SubscriptionListAPIView(APIView):
+class SubscriptionStatAPIView(APIView):
     serializer_class = serializers.SubscriptionSerializer
 
     def get_queryset(self):
@@ -277,8 +306,8 @@ class SubscriptionListAPIView(APIView):
         period = self.request.GET.get("period")
         sub_id = self.request.GET.get("sub_id")
         # validation
-        allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
-        allowed_subs = AllowedSubscription.objects.all().values_list("sub_id", flat=True)
+        allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
+        allowed_subs = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
 
         if not(period in allowed_periods):
             return []
@@ -313,7 +342,7 @@ class SubscriptionListAPIView(APIView):
         return Response(res.data, status=200)
 
 
-class SubscriptionTotalAPIView(APIView):
+class SubscriptionTotalStatAPIView(APIView):
     def get_queryset(self):
         today = datetime.date.today()
         tomorrow = today + datetime.timedelta(days=1)
