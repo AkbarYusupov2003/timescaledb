@@ -161,7 +161,7 @@ class Report(models.Model):
     )
 
     status = models.CharField(choices=STATUSES, default="PENDING")
-    section = models.CharField(max_length=128)
+    group = models.CharField(max_length=128)
     lines_count = models.PositiveIntegerField(null=True, blank=True)
     data = models.JSONField(default=dict, blank=True, null=True)
     file = models.FileField(null=True, blank=True)

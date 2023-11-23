@@ -53,4 +53,4 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(models.Report)
 class ReportAdmin(admin.ModelAdmin):
-    list_display = ("status", "section", "lines_count", "created_at")
+    list_display = ("status", "group", "lines_count", "created_at")

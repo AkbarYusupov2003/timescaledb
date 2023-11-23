@@ -120,7 +120,7 @@ def daily_history_task():
             daily.watched_duration += history.duration
             daily.save()
 
-
+# TODO
 def synchronize_content_task():
     data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
     print("DATA: ", data)

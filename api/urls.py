@@ -23,6 +23,7 @@ urlpatterns = [
     path("subscriptions-stat/", views.SubscriptionStatAPIView.as_view()),
     path("subscriptions-stat/total/", views.SubscriptionTotalStatAPIView.as_view()),
     #
+    # path("report/create/", views.ReportCreateView.as_view()),
 ]
 
 # Report

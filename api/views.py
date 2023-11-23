@@ -115,7 +115,6 @@ class CreateHistoryAPIView(APIView):
         print("create history ended")
         return Response("Ok")
 
-# GET https://legacy.glob.uz/ru/api/v1/report/make/content?offset=0&limit=20&period=hour&page=0&search=серебро
 
 # Content
 class ContentStatAPIView(generics.GenericAPIView):
@@ -366,3 +365,24 @@ class SubscriptionTotalStatAPIView(APIView):
         today = self.get_queryset()
         res = {"total": total if total else 0, "today": today[1] if today else 0}
         return Response(res, status=200)
+
+
+class ReportCreateView(APIView):
+    # GET https://legacy.glob.uz/ru/api/v1/report/make/content?offset=0&limit=20&period=hour&page=0&search=серебро
+    # allowed_reports = content, broadcast
+    def get(self, request, *args, **kwargs):
+        group = request.GET.get("group")
+        if group == "content":
+            print("creating report for content")
+            data_for_file = 1
+            qs = 1
+            # ...
+            # models.Report.objects.create(
+            #     section="content", lines_count=qs.count()
+            # )
+            return Response({"worked": 1})
+        elif group == "broadcast":
+            print("creating report for broadcast")
+            return Response({"worked": 2})
+        else:
+            return Response({"error": "report group validation"}, status=400)
