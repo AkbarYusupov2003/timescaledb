@@ -120,10 +120,20 @@ def daily_history_task():
             daily.watched_duration += history.duration
             daily.save()
 
-# TODO
-def synchronize_content_task():
-    data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
-    print("DATA: ", data)
+
+@shared_task(name="daily-data-update-task")
+def daily_data_update_task():
+    # update contents
+    # update broadcasts
+    pass
+
+# title-Content1, gender-M, age_group-4, device_group-Table
+# title-Content1, gender-M, age_group-4, device_group-Phone
+
+# # TODO
+# def synchronize_content_task():
+#     data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
+#     print("DATA: ", data)
 
 
 app.conf.beat_schedule = {
@@ -136,7 +146,7 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute='0', hour='*'),
     },
     #
-    'hourly-register-task': {
+    'hourly-register-task ': {
         'task': 'hourly-register-task',
         'schedule': crontab(minute='1', hour='*'),
     },
@@ -144,4 +154,5 @@ app.conf.beat_schedule = {
         'task': 'hourly-subscription-task',
         'schedule': crontab(minute='2', hour='*'),
     },
+    
 }
