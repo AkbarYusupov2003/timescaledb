@@ -12,12 +12,13 @@ from rest_framework.pagination import LimitOffsetPagination
 from api import serializers
 from api import utils
 from statistic import models
-from internal.models import AllowedSubscription, AllowedPeriod, Content
+from internal.models import AllowedSubscription, AllowedPeriod, Category, Content
 
 
+# Content: http://127.0.0.1:8000/content-stat/?period=day&from_date=2023-11-22-0:00&to_date=2023-11-30-00:00
 # Subscription: http://127.0.0.1:8000/subscriptions-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17&sub_id=1
-
 # Register: http://127.0.0.1:8000/register-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
+
 
 # class CreateHistoryAPIView(APIView):
     
@@ -107,21 +108,46 @@ class ContentListAPIView(generics.GenericAPIView):
         from_date = self.request.GET.get("from_date")
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
-        sub_id = self.request.GET.get("period") # TODO ADD
-        sponsors = 1 # TODO ADD
-        ordering = self.request.GET.get("ordering") # TODO ADD
+        sub_id = self.request.GET.get("sub_id")
+        sponsors = self.request.GET.get("sponsors", "")
+        category = self.request.GET.get("category")
+        is_russian = self.request.GET.get("is_russian")
+        ordering = self.request.GET.get("ordering")
+        # ------------------------------------------------------------------------------------------
         allowed_periods = AllowedPeriod.objects.all().values_list("name", flat=True)
-        allowed_orderings = ("watched_users", "watched_duration", "content_duration", "id", "title")
         allowed_subscriptions = AllowedSubscription.objects.all().values_list("sub_id", flat=True)
+        allowed_orderings = ("watched_users", "watched_duration", "content_duration", "id", "title")
+        qs_filter = {}
 
+        try:
+            limit = int(request.GET.get("limit", 20))
+            offset = int(request.GET.get("offset", 0))
+        except:
+            return Response({"error": "limit, offset validation"}, status=400)
+        
         if not(period in allowed_periods):
             return Response({"error": "period validation"}, status=400)
 
-        # if not(sub_id in allowed_subscriptions):
-        #     return Response({"error": "sub_id validation"}, status=400)
+        if sub_id:
+            if sub_id in allowed_subscriptions:
+                qs_filter["allowed_subscriptions__in"] = (sub_id,)
+            else:
+                return Response({"error": "sub_id validation"}, status=400)
 
-        # if not(ordering in allowed_orderings):
-        #     return Response({"error": "ordering validation"}, status=400)
+        if sponsors.isnumeric():
+            qs_filter["sponsors__in"] = (sponsors,)
+
+        if category.isnumeric():
+            qs_filter["category__pk"] = category
+
+        if is_russian == "True":
+            qs_filter["is_russian"] = True
+        elif is_russian == "False":
+            qs_filter["is_russian"] = False
+
+        if ordering:
+            if not(ordering in allowed_orderings):
+                return Response({"error": "ordering validation"}, status=400)
 
         try:
             date_format = "%Y-%m-%d-%H:%M"
@@ -137,9 +163,12 @@ class ContentListAPIView(generics.GenericAPIView):
                 return Response({"error": "period validation"}, status=400)
         except Exception as e:
             return Response({"error": e}, status=400)
-        # -----------
 
-        queryset = self.get_queryset()
+        queryset = self.queryset.filter(**qs_filter)
+        if not qs_filter:
+            # paginate
+            queryset = queryset[offset:limit+offset]
+
         res = []
 
         for content in queryset:
@@ -156,18 +185,22 @@ class ContentListAPIView(generics.GenericAPIView):
             stat =  cursor.fetchone()
 
             content = self.serializer_class(content).data
+            print("\n\n")
             print("content", content, type(content))
-            content.update({
-                "watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {} # "age_group": age_group, "gender": gender
-            })
+            print("\n\n")
+            content.update({"watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {}})
             if stat:
                 content["watched_users"] = stat[1]
                 content["watched_duration"] = stat[2]
                 content["age_group"] = stat[3]
                 content["gender"] = stat[4]
-
+            # get best 30 stats and return
             res.append(content)
 
+        if qs_filter:
+            # paginate
+            pass
+        
         return Response(res, status=200)
 
 

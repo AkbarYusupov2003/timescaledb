@@ -26,9 +26,10 @@ class AllowedPeriod(models.Model):
 
 class Sponsor(models.Model):
     title = models.CharField(max_length=255)
+    is_chosen = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.title
+        return f"{self.pk} {self.title}"
 
     class Meta:
         verbose_name = "Спонсор"
