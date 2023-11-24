@@ -150,7 +150,7 @@ class ContentStatAPIView(generics.GenericAPIView):
         # SELECT * FROM events WHERE params->>'name' = 'Click Button';
         # age_group->>'{age_group}'
         # select_filter = f"AND (age_group::json->'{age_group}')"
-        select_filter = f"AND (age_group::json->'{age_group}' = 5')" # TODO FIX
+        select_filter = f"AND (age_group::json->'3')" # TODO FIX
         where_filter = []
         try:
             limit = int(request.GET.get("limit", 20))
