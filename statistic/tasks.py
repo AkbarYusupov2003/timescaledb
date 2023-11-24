@@ -119,6 +119,7 @@ def daily_history_task():
             daily.watched_users_count += 1
             daily.watched_duration += history.duration
             daily.save()
+    # TODO Broadcast Monthly
 
 
 @shared_task(name="daily-data-update-task")
@@ -127,8 +128,11 @@ def daily_data_update_task():
     # update broadcasts
     pass
 
-# TODO title-Content1, gender-M, age_group-4, device_group-Table
-# TODO title-Content1, gender-M, age_group-4, device_group-Phone
+# data = {"M": {"total": 25, "age_group": {"4": 15, "5": 10}, device_groups: {"tablet": 10, "phone": 15}}, "W": {"total": 24, "age_group": {"4": 14, "5": 10}, device_groups: {"tablet": 10, "phone": 14} } 
+
+# TODO content_hour: title-Content1, gender-M, age_group-4, device_group-Table
+# TODO content_hour: title-Content1, gender-M, age_group-4, device_group-Phone
+# TODO content_day : 
 
 # # TODO
 # def synchronize_content_task():
