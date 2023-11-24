@@ -148,7 +148,9 @@ class ContentStatAPIView(generics.GenericAPIView):
         allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
         qs_filter = {}
         # SELECT * FROM events WHERE params->>'name' = 'Click Button';
-        select_filter = f"AND (age_group::json->'{age_group}')" # ", age_group::json"
+        # age_group->>'{age_group}'
+        # select_filter = f"AND (age_group::json->'{age_group}')"
+        select_filter = f"AND (age_group::json->'{age_group}' = 5')" # TODO FIX
         where_filter = []
         try:
             limit = int(request.GET.get("limit", 20))
