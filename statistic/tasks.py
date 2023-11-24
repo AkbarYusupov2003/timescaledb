@@ -6,9 +6,9 @@ from celery import shared_task
 from celery.schedules import crontab
 
 from config.celery import app
-from internal.models import Content, Broadcast
-from statistic.utils import data_extractor, etc
 from statistic import models
+from internal import models as internal_models
+from statistic.utils import data_extractor, etc
 
 
 @shared_task(name='hourly-register-task')
@@ -34,10 +34,12 @@ def hourly_subscription_task():
 def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(hours=1)
+    
     histories = models.History.objects.filter(
         time__range=(from_time, to_time),
     )
     print("Histories", histories, from_time, to_time)
+    # Hourly
     for history in histories:
         try:
             if history.content_id:
@@ -45,94 +47,152 @@ def hourly_history_task():
                     {"content_id": history.content_id, "episode_id": history.episode_id},
                     history.slug
                 ):
-                    content, _ = models.ContentHour.objects.get_or_create(
-                        time=to_time, content_id=history.content_id, episode_id=history.episode_id
+                    content, created = models.ContentHour.objects.get_or_create(
+                        time=to_time, content_id=history.content_id, episode_id=history.episode_id, 
+                        sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
                     )
+                    if created:
+                        content.watched_users_count = 1
+
                     content.age_group[str(history.age_group)] = content.age_group.get(str(history.age_group), 0) + 1
                     content.gender[str(history.gender)] = content.gender.get(str(history.gender), 0) + 1
-                    content.watched_users_count += 1
                     content.watched_duration += history.duration
                     content.save()
             elif history.broadcast_id:
-                if Broadcast.objects.get(
+                if internal_models.Broadcast.objects.get(
                     broadcast_id=history.broadcast_id
                 ):
-                    broadcast, _ = models.BroadcastHour.objects.get_or_create(
+                    broadcast, created = models.BroadcastHour.objects.get_or_create(
                         time=to_time, broadcast_id=history.broadcast_id,
+                        sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
                     )
+                    if created:
+                        broadcast.watched_users_count = 1
+                    
                     broadcast.age_group[str(history.age_group)] = broadcast.age_group.get(str(history.age_group), 0) + 1
                     broadcast.gender[str(history.gender)] = broadcast.gender.get(str(history.gender), 0) + 1
-                    broadcast.watched_users_count+= 1
                     broadcast.watched_duration += history.duration
                     broadcast.save()
         except Exception as e:
             print("Exception", e)
+    # Hourly ended
 
 
-@shared_task(name='daily-history-task')
+@shared_task(name="daily-history-task")
 def daily_history_task():
     # to_time = datetime.date.today()
-    # from_time = to_time - datetime.timedelta(days=1)
-    from_time = datetime.date.today()
+    # from_time = to_time - datetime.timedelta(days=1) # Yesterday
+    from_time = datetime.date.today() # Yesterday
     to_time = from_time + datetime.timedelta(days=1)
-
-    contents = Content.objects.all()
+    
+    # DAILY
+    # Content
+    contents = internal_models.Content.objects.all()
     for content in contents:
         histories = models.History.objects.filter(
-            time__range=(from_time, to_time), content_id=content.content_id, episode_id=content.episode_id
-        )
-        daily = models.ContentDay.objects.create(
-            time=from_time, content_id=content.content_id, episode_id=content.episode_id
+            time__range=(from_time, to_time), content_id=content.content_id, episode_id=content.episode_id,
         )
         for history in histories:
-            daily.age_group[str(history.age_group)] = daily.age_group.get(str(history.age_group), 0) + 1
-            daily.gender[str(history.gender)] = daily.gender.get(str(history.gender), 0) + 1
-            daily.watched_users_count += 1
-            daily.watched_duration += history.duration
-            daily.save()
+            daily_c, created = models.ContentDay.objects.get_or_create(
+                time=from_time, content_id=content.content_id, episode_id=content.episode_id,
+                sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
+            )
+            if created:
+                daily_c.watched_users_count = 1
 
-    dailies = models.ContentDay.objects.filter(
-        time=from_time
-    )
-    for daily in dailies:
-        monthly, _ = models.ContentMonth.objects.get_or_create(
-            time=from_time, content_id=daily.content_id, episode_id=daily.episode_id
-        )
-        monthly.age_group = dict(Counter(monthly.age_group) + Counter(daily.age_group))
-        monthly.gender = dict(Counter(monthly.gender) + Counter(daily.gender))
-        monthly.watched_users_count += daily.watched_users_count
-        monthly.watched_duration += daily.watched_duration
-        monthly.save()
+            daily_c.age_group[str(history.age_group)] = daily_c.age_group.get(str(history.age_group), 0) + 1
+            daily_c.gender[str(history.gender)] = daily_c.gender.get(str(history.gender), 0) + 1
+            daily_c.watched_duration += history.duration
+            daily_c.save()
 
     # Broadcast
-    broadcasts = Broadcast.objects.all()
+    broadcasts = internal_models.Broadcast.objects.all()
     for broadcast in broadcasts:
         histories = models.History.objects.filter(
             time__range=(from_time, to_time), broadcast_id=broadcast.broadcast_id
         )
-        daily = models.BroadcastDay.objects.create(
-            time=from_time, broadcast_id=broadcast.broadcast_id
-        )
         for history in histories:
-            daily.age_group[str(history.age_group)] = daily.age_group.get(str(history.age_group), 0) + 1
-            daily.gender[str(history.gender)] = daily.gender.get(str(history.gender), 0) + 1
-            daily.watched_users_count += 1
-            daily.watched_duration += history.duration
-            daily.save()
-    # TODO Broadcast Monthly
+            daily_b, created = models.BroadcastDay.objects.get_or_create(
+                time=from_time, broadcast_id=broadcast.broadcast_id,
+                sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
+            )
+            if created:
+                daily_b.watched_users_count = 1
+
+            daily_b.age_group[str(history.age_group)] = daily_b.age_group.get(str(history.age_group), 0) + 1
+            daily_b.gender[str(history.gender)] = daily_b.gender.get(str(history.gender), 0) + 1
+            daily_b.watched_duration += history.duration
+            daily_b.save()
+    # Daily ended
+    
+    # MONTHLY
+    # Content
+    daily_contents = models.ContentDay.objects.filter(
+        time=from_time
+    )
+    for content in daily_contents:
+        monthly_c, created = models.ContentMonth.objects.get_or_create(
+            time=from_time, content_id=content.content_id, episode_id=content.episode_id,
+            sid=content.sid, age_group__has_key=str(content.age_group), gender__has_key=str(content.gender), country=content.country, device=content.device
+        )
+        if created:
+            monthly_c.watched_users_count = 1
+
+        monthly_c.age_group[str(content.age_group)] = monthly_c.age_group.get(str(content.age_group), 0) + 1
+        monthly_c.gender[str(content.gender)] = monthly_c.gender.get(str(content.gender), 0) + 1
+        monthly_c.watched_duration += content.watched_duration
+        monthly_c.save()
+    
+    # Broadcast
+    daily_broadcasts = models.BroadcastDay.objects.filter(
+        time=from_time
+    )
+    for broadcast in daily_broadcasts:
+        monthly_b, created = models.BroadcastMonth.objects.get_or_create(
+            time=from_time, broadcast_id=broadcast.broadcast_id,
+            sid=broadcast.sid, age_group__has_key=str(broadcast.age_group), gender__has_key=str(broadcast.gender), country=broadcast.country, device=broadcast.device
+        )
+        if created:
+            monthly_b.watched_users_count = 1
+
+        monthly_b.age_group[str(broadcast.age_group)] = monthly_b.age_group.get(str(broadcast.age_group), 0) + 1
+        monthly_b.gender[str(broadcast.gender)] = monthly_b.gender.get(str(broadcast.gender), 0) + 1
+        monthly_b.watched_duration += broadcast.watched_duration
+        monthly_b.save()
+    # Monthly ended
 
 
 @shared_task(name="daily-data-update-task")
 def daily_data_update_task():
     # update contents
+    contents = internal_models.Content.objects.all().select_related(
+        "category"
+    ).prefetch_related("sponsors", "allowed_subscriptions")
+    slugs = [{"slug": "7635_14946"}]
+    for content in contents:
+        # content
+        slug = slugs[0]["slug"]
+        data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": slug}).get("results").get(slug)
+        if data:
+            content_dict = content.__dict__
+            print("data", data)
+            print("\n\n")
+            print("content_dict", content_dict)
+            print("\n\n")
+            updated = False
+            for key, value in data.items():
+                if content_dict.get(key) != value:
+                    updated = True
+                    setattr(content, key, value)
+            if updated:
+                content.save()
+        else:
+            print("no result")
+            continue
+    
     # update broadcasts
     pass
 
-# data = {"M": {"total": 25, "age_group": {"4": 15, "5": 10}, device_groups: {"tablet": 10, "phone": 15}}, "W": {"total": 24, "age_group": {"4": 14, "5": 10}, device_groups: {"tablet": 10, "phone": 14} } 
-
-# TODO content_hour: title-Content1, gender-M, age_group-4, device_group-Table
-# TODO content_hour: title-Content1, gender-M, age_group-4, device_group-Phone
-# TODO content_day : 
 
 # # TODO
 # def synchronize_content_task():

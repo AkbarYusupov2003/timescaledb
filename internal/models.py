@@ -2,8 +2,12 @@ from django.db import models
 
 
 class AllowedSubscription(models.Model):
-    sub_id = models.CharField(unique=True, max_length=8)    
-    title = models.CharField(max_length=128)
+    sub_id = models.CharField(
+        verbose_name="ID Подписки", unique=True, max_length=8
+    )    
+    title = models.CharField(
+        verbose_name="Название", max_length=128
+    )
 
     def __str__(self):
         return self.title
@@ -14,7 +18,7 @@ class AllowedSubscription(models.Model):
 
     
 class AllowedPeriod(models.Model):
-    name = models.CharField(max_length=32)
+    name = models.CharField(verbose_name="Название", max_length=32)
 
     def __str__(self):
         return self.name
@@ -25,8 +29,8 @@ class AllowedPeriod(models.Model):
 
 
 class Sponsor(models.Model):
-    title = models.CharField(max_length=255)
-    is_chosen = models.BooleanField(default=False)
+    title = models.CharField(verbose_name="Название", max_length=255)
+    is_chosen = models.BooleanField(verbose_name="Выбран", default=False)
 
     def __str__(self):
         return f"{self.pk} {self.title}"
@@ -37,9 +41,15 @@ class Sponsor(models.Model):
 
 
 class Category(models.Model):
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255, blank=True)
-    title_uz = models.CharField(max_length=255, blank=True)
+    title_ru = models.CharField(
+        verbose_name="Название на русском", max_length=255
+    )
+    title_en = models.CharField(
+        verbose_name="Название на английском", max_length=255, blank=True
+    )
+    title_uz = models.CharField(
+        verbose_name="Название на узбекском", max_length=255, blank=True
+    )
 
     def __str__(self):
         return self.title_ru
@@ -50,9 +60,15 @@ class Category(models.Model):
 
 
 class BroadcastCategory(models.Model):
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255, blank=True)
-    title_uz = models.CharField(max_length=255, blank=True)
+    title_ru = models.CharField(
+        verbose_name="Название на русском", max_length=255
+    )
+    title_en = models.CharField(
+        verbose_name="Название на английском", max_length=255, blank=True
+    )
+    title_uz = models.CharField(
+        verbose_name="Название на узбекском", max_length=255, blank=True
+    )
 
     def __str__(self):
         return self.title_ru
@@ -63,21 +79,37 @@ class BroadcastCategory(models.Model):
 
 
 class Content(models.Model):
-    title_ru = models.CharField(max_length=255)
-    title_en = models.CharField(max_length=255, blank=True)
-    title_uz = models.CharField(max_length=255, blank=True)
+    title_ru = models.CharField(
+        verbose_name="Название на русском", max_length=255
+    )
+    title_en = models.CharField(
+        verbose_name="Название на английском", max_length=255, blank=True
+    )
+    title_uz = models.CharField(
+        verbose_name="Название на узбекском", max_length=255, blank=True
+    )
     #
-    content_id = models.PositiveIntegerField()
-    episode_id = models.PositiveIntegerField(null=True, blank=True)
+    content_id = models.PositiveIntegerField(verbose_name="ID Контента")
+    episode_id = models.PositiveIntegerField(verbose_name="ID Эпизода", null=True, blank=True)
     #
-    is_russian = models.BooleanField(default=True)
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True, blank=True)
-    sponsors = models.ManyToManyField(Sponsor, blank=True)
-    allowed_subscriptions = models.ManyToManyField(AllowedSubscription, blank=True)
+    is_russian = models.BooleanField(verbose_name="На русском", default=True)
+    category = models.ForeignKey(
+        Category, verbose_name="Категории", on_delete=models.PROTECT, null=True, blank=True
+    )
+    sponsors = models.ManyToManyField(
+        Sponsor, verbose_name="Спонсоры", blank=True
+    )
+    allowed_subscriptions = models.ManyToManyField(
+        AllowedSubscription, verbose_name="Разрешенные подписки", blank=True
+    )
     #
-    duration = models.PositiveIntegerField(null=True, blank=True)
+    duration = models.PositiveIntegerField(
+        verbose_name="Длительность", null=True, blank=True
+    )
     slug = models.SlugField(unique=True)
-    year = models.PositiveSmallIntegerField(null=True, blank=True)
+    year = models.PositiveSmallIntegerField(
+        verbose_name="Год", null=True, blank=True
+    )
 
     class Meta:
         verbose_name = "Контент"
@@ -86,11 +118,21 @@ class Content(models.Model):
 
 
 class Broadcast(models.Model):
-    title = models.CharField(max_length=255, null=True, blank=True)
-    quality = models.CharField(max_length=255, null=True, blank=True)
-    broadcast_id = models.PositiveBigIntegerField(unique=True)
-    category = models.ForeignKey(BroadcastCategory, on_delete=models.CASCADE, null=True, blank=True)
-    allowed_subscriptions = models.ManyToManyField(AllowedSubscription, blank=True)
+    title = models.CharField(
+        verbose_name="Название", max_length=255, null=True, blank=True
+    )
+    quality = models.CharField(
+        verbose_name="Качество", max_length=255, null=True, blank=True
+    )
+    broadcast_id = models.PositiveBigIntegerField(
+        verbose_name="ID Телеканала", unique=True
+    )
+    category = models.ForeignKey(
+        BroadcastCategory, verbose_name="Категории", on_delete=models.CASCADE, null=True, blank=True
+    )
+    allowed_subscriptions = models.ManyToManyField(
+        AllowedSubscription, verbose_name="Разрешенные подписки", blank=True
+    )
 
     def __str__(self):
         return self.title

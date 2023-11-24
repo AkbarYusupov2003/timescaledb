@@ -77,11 +77,17 @@ class CreateHistoryAPIView(APIView):
     def post(self, request, *args, **kwargs):
         print("create history")
         try:
+            splay_data = utils.get_data_from_token(self.request.data.get("token"))
+            if not splay_data:
+                return Response({"Error": "token validation"}, status=400)
             content_id = int(request.data.get('content_id', 0))
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
-            gender = "M" # self.request.auth.payload.get("gender")
-            age = utils.get_group_by_age(19) # self.request.auth.payload.get("age")
+            sid = splay_data["sid"]# "sdgt21gknmg'l3kwgnnk" #
+            country = splay_data["c_code"]["country_code"] # "UZ" # 
+            gender = splay_data["gender"] # "M" #
+            age = utils.get_group_by_age(splay_data["age"])# utils.get_group_by_age(19) #
+            device = splay_data["device"] # "device"
         except Exception as e:
             return Response({"Error": e}, status=400)
 
@@ -93,10 +99,9 @@ class CreateHistoryAPIView(APIView):
 
         user_agent = request.META.get('HTTP_USER_AGENT', '')
 
-        device = "device" # self.request.auth.payload.get("device")
         data = {
-            "ip_address": ip_address, "user_agent": user_agent, "device": device, 
-            "time": datetime.datetime.now(), "gender": gender, "age_group": age
+            "sid": sid, "ip_address": ip_address, "user_agent": user_agent, "device": device, 
+            "time": datetime.datetime.now(), "gender": gender, "age_group": age, "country": country
         }
         if content_id:
             data["content_id"] = content_id
@@ -134,11 +139,17 @@ class ContentStatAPIView(generics.GenericAPIView):
         category = request.GET.get("category")
         is_russian = request.GET.get("is_russian")
         ordering = request.GET.get("ordering")
+        age_group = request.GET.get("age_group")
+        gender = request.GET.get("gender")
+        country = request.GET.get("country")
+        device = request.GET.get("device")
         # ------------------------------------------------------------------------------------------
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
         allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
         qs_filter = {}
-
+        # SELECT * FROM events WHERE params->>'name' = 'Click Button';
+        select_filter = f"AND (age_group::json->'{age_group}')" # ", age_group::json"
+        where_filter = []
         try:
             limit = int(request.GET.get("limit", 20))
             offset = int(request.GET.get("offset", 0))
@@ -167,6 +178,21 @@ class ContentStatAPIView(generics.GenericAPIView):
             qs_filter["is_russian"] = True
         elif is_russian == "False":
             qs_filter["is_russian"] = False
+        
+        if age_group in utils.AGE_GROUPS:
+            print("HERE")
+            select_filter += f", age_group::json->'{age_group}'"
+            # select_filter.append(f"age_group::json->'{age_group}'")
+
+        if gender in utils.GENDERS:
+            select_filter += f", gender::json->'{gender}'"
+            # select_filter.append(f"gender::json->'{gender}'")
+
+        if country:
+            where_filter.append(f"AND (country = '{country}')")
+
+        if device:
+            where_filter.append(f"AND (device = '{device}')")
 
         try:
             date_format = "%Y-%m-%d-%H:%M"
@@ -202,24 +228,48 @@ class ContentStatAPIView(generics.GenericAPIView):
 
         for content in queryset:
             cursor = connection.cursor()
-            cursor.execute(
-                f"""
-                    SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
-                    FROM {table_name}
-                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
-                          (content_id = '{content.content_id}')
-                          {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
-                """
-            )
-            stat =  cursor.fetchone()
+            # select_filter = ",".join(select_filter) if select_filter else ""
+            where_filter = "\n".join(where_filter) if where_filter else ""
+            print("select_filter", select_filter)
+            print("where_filter", where_filter)
+            
+            # SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
+            query = f"""
+                SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json
+                FROM {table_name}
+                WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
+                    (content_id = '{content.content_id}')
+                    {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
+                    {select_filter}
+            """
+            print("query", query)
+            cursor.execute(query)
+            stat =  cursor.fetchall()
+            print("STAT: ", stat)
+            # TODO
             content = self.serializer_class(content).data
-            content.update({"watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {}})
-            if stat:
-                content["watched_users"] = stat[1]
-                content["watched_duration"] = stat[2]
-                content["age_group"] = stat[3]
-                content["gender"] = stat[4]
-            res.append(content)
+            # TODO
+        
+        # for content in queryset:
+        #     cursor = connection.cursor()
+        #     cursor.execute(
+        #         f"""
+        #             SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
+        #             FROM {table_name}
+        #             WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
+        #                   (content_id = '{content.content_id}')
+        #                   {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
+        #         """
+        #     )
+        #     stat =  cursor.fetchone()
+        #     content = self.serializer_class(content).data
+        #     content.update({"watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {}})
+        #     if stat:
+        #         content["watched_users"] = stat[1]
+        #         content["watched_duration"] = stat[2]
+        #         content["age_group"] = stat[3]
+        #         content["gender"] = stat[4]
+        #     res.append(content)
 
         if ordering == "watched_users":
             res = sorted(res, key=lambda d: d["watched_users"])[offset:limit+offset]
