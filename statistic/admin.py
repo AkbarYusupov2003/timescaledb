@@ -2,48 +2,54 @@ from django.contrib import admin
 
 from statistic import models
 
+class AgeGroupAdmin(admin.ModelAdmin):
+    
+    @admin.display(description="Возрастная группа")
+    def age_group_display(self, obj):
+        return obj.get_age_group_display()
+
 
 # Content Statistic
 @admin.register(models.ContentHour)
-class ContentHourAdmin(admin.ModelAdmin):
-    list_display = ("content_id", "episode_id", "sid", "watched_users_count", "watched_duration", "time")
+class ContentHourAdmin(AgeGroupAdmin):
+    list_display = ("content_id", "episode_id", "sid", "watched_users_count", "watched_duration", "country", "age_group", "gender", "time")
     list_filter = ("time",)
 
 
 @admin.register(models.ContentDay)
-class ContentDayAdmin(admin.ModelAdmin):
-    list_display = ("content_id", "episode_id", "sid", "watched_users_count", "watched_duration", "time")
+class ContentDayAdmin(AgeGroupAdmin):
+    list_display = ("content_id", "episode_id", "sid", "watched_users_count", "watched_duration", "country", "age_group", "gender", "time")
     list_filter = ("time",)
 
 
 @admin.register(models.ContentMonth)
-class ContentMonthAdmin(admin.ModelAdmin):
-    list_display = ("content_id", "episode_id", "sid", "watched_users_count", "watched_duration", "time")
+class ContentMonthAdmin(AgeGroupAdmin):
+    list_display = ("content_id", "episode_id", "sid", "watched_users_count", "watched_duration", "country", "age_group", "gender", "time")
     list_filter = ("time",)
 
 
 # Broadcast Statistic
 @admin.register(models.BroadcastHour)
-class BroadcastHourAdmin(admin.ModelAdmin):
-    list_display = ("broadcast_id", "sid", "watched_users_count", "watched_duration", "time")
+class BroadcastHourAdmin(AgeGroupAdmin):
+    list_display = ("broadcast_id", "sid", "watched_users_count", "watched_duration", "country", "age_group", "gender", "time")
     list_filter = ("time",)
 
 
 @admin.register(models.BroadcastDay)
-class BroadcastDayAdmin(admin.ModelAdmin):
-    list_display = ("broadcast_id", "sid", "watched_users_count", "watched_duration", "time")
+class BroadcastDayAdmin(AgeGroupAdmin):
+    list_display = ("broadcast_id", "sid", "watched_users_count", "watched_duration", "country", "age_group", "gender", "time")
     list_filter = ("time",)
 
 
 @admin.register(models.BroadcastMonth)
-class BroadcastMonthAdmin(admin.ModelAdmin):
-    list_display = ("broadcast_id", "sid", "watched_users_count", "watched_duration", "time")
+class BroadcastMonthAdmin(AgeGroupAdmin):
+    list_display = ("broadcast_id", "sid", "watched_users_count", "watched_duration", "country", "age_group", "gender", "time")
     list_filter = ("time",)
 
 
 # -------------------------------------------------------------------------------------------------
 @admin.register(models.History)
-class HistoryAdmin(admin.ModelAdmin):
+class HistoryAdmin(AgeGroupAdmin):
     list_display = ("slug", "content_id", "broadcast_id", "episode_id", "sid", "country", "age_group", "gender", "device", "time")
     list_filter = ("time",)
 

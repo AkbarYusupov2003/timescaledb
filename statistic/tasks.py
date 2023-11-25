@@ -48,14 +48,15 @@ def hourly_history_task():
                     history.slug
                 ):
                     content, created = models.ContentHour.objects.get_or_create(
-                        time=to_time, content_id=history.content_id, episode_id=history.episode_id, 
-                        sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
+                        time=from_time, content_id=history.content_id, episode_id=history.episode_id,
+                        sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
                     )
+                    
                     if created:
                         content.watched_users_count = 1
 
-                    content.age_group[str(history.age_group)] = content.age_group.get(str(history.age_group), 0) + 1
-                    content.gender[str(history.gender)] = content.gender.get(str(history.gender), 0) + 1
+                    content.age_group_count += 1
+                    content.gender_count += 1
                     content.watched_duration += history.duration
                     content.save()
             elif history.broadcast_id:
@@ -64,13 +65,14 @@ def hourly_history_task():
                 ):
                     broadcast, created = models.BroadcastHour.objects.get_or_create(
                         time=to_time, broadcast_id=history.broadcast_id,
-                        sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
+                        sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
                     )
+                    
                     if created:
                         broadcast.watched_users_count = 1
                     
-                    broadcast.age_group[str(history.age_group)] = broadcast.age_group.get(str(history.age_group), 0) + 1
-                    broadcast.gender[str(history.gender)] = broadcast.gender.get(str(history.gender), 0) + 1
+                    broadcast.age_group_count += 1
+                    broadcast.gender_count += 1
                     broadcast.watched_duration += history.duration
                     broadcast.save()
         except Exception as e:
@@ -95,16 +97,17 @@ def daily_history_task():
         for history in histories:
             daily_c, created = models.ContentDay.objects.get_or_create(
                 time=from_time, content_id=content.content_id, episode_id=content.episode_id,
-                sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
+                sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
             )
+
             if created:
                 daily_c.watched_users_count = 1
 
-            daily_c.age_group[str(history.age_group)] = daily_c.age_group.get(str(history.age_group), 0) + 1
-            daily_c.gender[str(history.gender)] = daily_c.gender.get(str(history.gender), 0) + 1
+            daily_c.age_group_count += 1
+            daily_c.gender_count += 1
             daily_c.watched_duration += history.duration
             daily_c.save()
-
+    
     # Broadcast
     broadcasts = internal_models.Broadcast.objects.all()
     for broadcast in broadcasts:
@@ -114,49 +117,43 @@ def daily_history_task():
         for history in histories:
             daily_b, created = models.BroadcastDay.objects.get_or_create(
                 time=from_time, broadcast_id=broadcast.broadcast_id,
-                sid=history.sid, age_group__has_key=str(history.age_group), gender__has_key=str(history.gender), country=history.country, device=history.device
+                sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
             )
             if created:
                 daily_b.watched_users_count = 1
 
-            daily_b.age_group[str(history.age_group)] = daily_b.age_group.get(str(history.age_group), 0) + 1
-            daily_b.gender[str(history.gender)] = daily_b.gender.get(str(history.gender), 0) + 1
+            daily_c.age_group_count += 1
+            daily_c.gender_count += 1
             daily_b.watched_duration += history.duration
             daily_b.save()
     # Daily ended
-    
+
     # MONTHLY
     # Content
-    daily_contents = models.ContentDay.objects.filter(
-        time=from_time
-    )
+    daily_contents = models.ContentDay.objects.filter(time=from_time)
     for content in daily_contents:
-        monthly_c, created = models.ContentMonth.objects.get_or_create(
+        monthly_c = models.ContentMonth.objects.create(
             time=from_time, content_id=content.content_id, episode_id=content.episode_id,
-            sid=content.sid, age_group__has_key=str(content.age_group), gender__has_key=str(content.gender), country=content.country, device=content.device
+            sid=content.sid, age_group=content.age_group, gender=content.gender, country=content.country, device=content.device
         )
-        if created:
-            monthly_c.watched_users_count = 1
 
-        monthly_c.age_group[str(content.age_group)] = monthly_c.age_group.get(str(content.age_group), 0) + 1
-        monthly_c.gender[str(content.gender)] = monthly_c.gender.get(str(content.gender), 0) + 1
+        monthly_c.age_group_count += content.age_group_count
+        monthly_c.gender_count += content.gender_count
+        monthly_c.watched_users_count += content.watched_users_count
         monthly_c.watched_duration += content.watched_duration
         monthly_c.save()
-    
-    # Broadcast
-    daily_broadcasts = models.BroadcastDay.objects.filter(
-        time=from_time
-    )
-    for broadcast in daily_broadcasts:
-        monthly_b, created = models.BroadcastMonth.objects.get_or_create(
-            time=from_time, broadcast_id=broadcast.broadcast_id,
-            sid=broadcast.sid, age_group__has_key=str(broadcast.age_group), gender__has_key=str(broadcast.gender), country=broadcast.country, device=broadcast.device
-        )
-        if created:
-            monthly_b.watched_users_count = 1
 
-        monthly_b.age_group[str(broadcast.age_group)] = monthly_b.age_group.get(str(broadcast.age_group), 0) + 1
-        monthly_b.gender[str(broadcast.gender)] = monthly_b.gender.get(str(broadcast.gender), 0) + 1
+    # Broadcast
+    daily_broadcasts = models.BroadcastDay.objects.filter(time=from_time)
+    for broadcast in daily_broadcasts:
+        monthly_b = models.BroadcastMonth.objects.create(
+            time=from_time, broadcast_id=broadcast.broadcast_id,
+            sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender,  country=broadcast.country, device=broadcast.device
+        )
+
+        monthly_b.age_group_count += broadcast.age_group_count
+        monthly_b.gender_count += broadcast.gender_count
+        monthly_b.watched_users_count += broadcast.watched_users_count
         monthly_b.watched_duration += broadcast.watched_duration
         monthly_b.save()
     # Monthly ended

@@ -83,11 +83,11 @@ class CreateHistoryAPIView(APIView):
             content_id = int(request.data.get('content_id', 0))
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
-            sid = splay_data["sid"]# "sdgt21gknmg'l3kwgnnk" #
-            country = splay_data["c_code"]["country_code"] # "UZ" # 
-            gender = splay_data["gender"] # "M" #
-            age = utils.get_group_by_age(splay_data["age"])# utils.get_group_by_age(19) #
-            device = splay_data["device"] # "device"
+            sid = splay_data["sid"]# "sdgt21gknmg'l3kwgnnk"
+            country = splay_data["c_code"]["country_code"] # "UZ"
+            gender = splay_data.get("gender", "M") # splay_data["gender"] # "M"
+            age = utils.get_group_by_age(splay_data["age"]) # utils.get_group_by_age(19)
+            device = splay_data.get("device", "PC") # splay_data["device"]
         except Exception as e:
             return Response({"Error": e}, status=400)
 
@@ -136,7 +136,7 @@ class ContentStatAPIView(generics.GenericAPIView):
         search = request.GET.get("search")
         sub_id = request.GET.get("sub_id")
         sponsors = request.GET.get("sponsors", "")
-        category = request.GET.get("category")
+        category = request.GET.get("category", "")
         is_russian = request.GET.get("is_russian")
         ordering = request.GET.get("ordering")
         age_group = request.GET.get("age_group")
@@ -147,11 +147,8 @@ class ContentStatAPIView(generics.GenericAPIView):
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
         allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
         qs_filter = {}
-        # SELECT * FROM events WHERE params->>'name' = 'Click Button';
-        # age_group->>'{age_group}'
-        # select_filter = f"AND (age_group::json->'{age_group}')"
-        select_filter = f"AND (age_group::json->'3')" # TODO FIX
-        where_filter = []
+
+        raw_filter = []
         try:
             limit = int(request.GET.get("limit", 20))
             offset = int(request.GET.get("offset", 0))
@@ -181,20 +178,17 @@ class ContentStatAPIView(generics.GenericAPIView):
         elif is_russian == "False":
             qs_filter["is_russian"] = False
         
-        if age_group in utils.AGE_GROUPS:
-            print("HERE")
-            select_filter += f", age_group::json->'{age_group}'"
-            # select_filter.append(f"age_group::json->'{age_group}'")
+        if age_group in models.AGE_GROUPS_LIST:
+            raw_filter.append(f"AND (age_group = '{age_group}')")
 
-        if gender in utils.GENDERS:
-            select_filter += f", gender::json->'{gender}'"
-            # select_filter.append(f"gender::json->'{gender}'")
+        if gender in models.GENDERS_LIST:
+            raw_filter.append(f"AND (gender = '{gender}')")
 
         if country:
-            where_filter.append(f"AND (country = '{country}')")
+            raw_filter.append(f"AND (country = '{country}')")
 
         if device:
-            where_filter.append(f"AND (device = '{device}')")
+            raw_filter.append(f"AND (device = '{device}')")
 
         try:
             date_format = "%Y-%m-%d-%H:%M"
@@ -231,26 +225,25 @@ class ContentStatAPIView(generics.GenericAPIView):
         for content in queryset:
             cursor = connection.cursor()
             # select_filter = ",".join(select_filter) if select_filter else ""
-            where_filter = "\n".join(where_filter) if where_filter else ""
-            print("select_filter", select_filter)
-            print("where_filter", where_filter)
+            raw_filter = " ".join(raw_filter) if raw_filter else ""
+            episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
+            print("raw", raw_filter)
             
-            # SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
-            query = f"""
-                SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json
-                FROM {table_name}
-                WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
-                    (content_id = '{content.content_id}')
-                    {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
-                    {select_filter}
-            """
+            # SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group, gender, age_group_count, gender_count
+            query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration), Sum(age_group_count), Sum(gender_count), device, country
+                        FROM {table_name}
+                        WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id} {raw_filter}
+                        GROUP BY interval, watched_users_count, watched_duration, age_group_count, gender_count, device, country"""
             print("query", query)
             cursor.execute(query)
             stat =  cursor.fetchall()
             print("STAT: ", stat)
-            # TODO
+            print("\n")
             content = self.serializer_class(content).data
-            # TODO
+            # for s in stat:
+            # add data to content["stat"]
+            if stat:
+                pass
         
         # for content in queryset:
         #     cursor = connection.cursor()
