@@ -14,7 +14,7 @@ from internal import models as internal_models
 
 
 # Content: http://127.0.0.1:8000/content-stat/?period=day&from_date=2023-11-22-0:00&to_date=2023-11-30-00:00
-# Subscription: http://127.0.0.1:8000/subscriptions-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17&sub_id=1
+# Subscription: http://127.0.0.1:8000/content-stat/?period=month&from_date=2023-11-22-0:00&to_date=2023-11-30-00:00&country=UZ&device=PC&gender=M&country=UZ
 # Register: http://127.0.0.1:8000/register-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
 
 
@@ -180,7 +180,7 @@ class ContentStatAPIView(generics.GenericAPIView):
         
         if age_group in models.AGE_GROUPS_LIST:
             raw_filter.append(f"AND (age_group = '{age_group}')")
-
+            
         if gender in models.GENDERS_LIST:
             raw_filter.append(f"AND (gender = '{gender}')")
 
@@ -224,27 +224,30 @@ class ContentStatAPIView(generics.GenericAPIView):
 
         for content in queryset:
             cursor = connection.cursor()
-            # select_filter = ",".join(select_filter) if select_filter else ""
             raw_filter = " ".join(raw_filter) if raw_filter else ""
             episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
             print("raw", raw_filter)
             
-            # SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group, gender, age_group_count, gender_count
-            query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration), Sum(age_group_count), Sum(gender_count), device, country
+            query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration)
                         FROM {table_name}
                         WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id} {raw_filter}
-                        GROUP BY interval, watched_users_count, watched_duration, age_group_count, gender_count, device, country""" # TODO what if watched_users_count different but they need to be added together
+                        GROUP BY interval, watched_users_count, watched_duration"""
+            
             print("query", query)
             cursor.execute(query)
             stat =  cursor.fetchall()
             print("STAT: ", stat)
             print("\n")
             content = self.serializer_class(content).data
-            # for s in stat:
-            # add data to content["stat"]
-            if stat:
-                pass
-        
+
+            watched_users = watched_duration = 0
+            for s in stat:
+                watched_users += s[1]
+                watched_duration += s[2]
+
+            content.update({"watched_users": watched_users, "watched_duration": watched_duration})
+            res.append(content)
+
         # for content in queryset:
         #     cursor = connection.cursor()
         #     cursor.execute(

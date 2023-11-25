@@ -172,16 +172,31 @@ def daily_data_update_task():
         data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": slug}).get("results").get(slug)
         if data:
             content_dict = content.__dict__
-            print("data", data)
-            print("\n\n")
+            print("data", data)   
+            print("\n")
             print("content_dict", content_dict)
-            print("\n\n")
             updated = False
             for key, value in data.items():
                 if content_dict.get(key) != value:
-                    updated = True
-                    setattr(content, key, value)
+                    if not(key == "sponsors" or key == "allowed_subscriptions"):
+                        updated = True
+                        setattr(content, key, value)
+            
+            content_sponsors = list(content.sponsors.all().values_list("pk", flat=True))
+            content_subs = list(content.allowed_subscriptions.all().values_list("pk", flat=True))
+            data_sponsors = data.get("sponsors")
+            data_subs = data.get("allowed_subscriptions")
+            
+            if content_sponsors != data_sponsors:
+                content.sponsors.set(data_sponsors)
+                updated = True
+                
+            if content_subs != data_subs:
+                content.allowed_subscriptions.set(data_subs)
+                updated = True
+
             if updated:
+                print("updating")
                 content.save()
         else:
             print("no result")
