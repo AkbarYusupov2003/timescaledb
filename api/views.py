@@ -233,7 +233,7 @@ class ContentStatAPIView(generics.GenericAPIView):
             query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration), Sum(age_group_count), Sum(gender_count), device, country
                         FROM {table_name}
                         WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id} {raw_filter}
-                        GROUP BY interval, watched_users_count, watched_duration, age_group_count, gender_count, device, country"""
+                        GROUP BY interval, watched_users_count, watched_duration, age_group_count, gender_count, device, country""" # TODO what if watched_users_count different but they need to be added together
             print("query", query)
             cursor.execute(query)
             stat =  cursor.fetchall()
