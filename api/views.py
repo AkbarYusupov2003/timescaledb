@@ -299,10 +299,10 @@ class ContentStatDetailAPIView(APIView):
         """
         cursor = connection.cursor()
         episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), {gender_counter}
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), {gender_counter}, age_group
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id}
-                    GROUP BY interval, watched_users_count"""
+                    GROUP BY interval, watched_users_count, age_group"""
 
         print("query", query)
         cursor.execute(query)
@@ -311,19 +311,14 @@ class ContentStatDetailAPIView(APIView):
         print("\n")
         content = self.serializer_class(content).data
 
-        watched_users = men = women = children = 0
-        
-        # {"times": ""}
         helper = []
         
         for s in stat:
             helper.append(
-                {"time": s[0], "watched_users": s[1], "men": s[2], "women": s[3], "children": s[4]}
+                {"time": s[0], "watched_users": s[1], "men": s[2], "women": s[3], "children": s[4], "age_group": s[5]}
             )
             
-        # content.update({"watched_users": watched_users, "men": men, "women": women, "children": children})
-        content["results"] = helper
-        
+        content["results"] = helper        
         print("CONTENT", content)
         return Response(content, status=200)
     
