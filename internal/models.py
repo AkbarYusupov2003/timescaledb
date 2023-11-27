@@ -2,21 +2,24 @@ from django.db import models
 
 
 class AllowedSubscription(models.Model):
-    sub_id = models.CharField(
-        verbose_name="ID Подписки", unique=True, max_length=8
-    )    
-    title = models.CharField(
+    title_ru = models.CharField(
         verbose_name="Название", max_length=128
+    )
+    title_en = models.CharField(
+        verbose_name="Название на английском", max_length=128, blank=True
+    )
+    title_uz = models.CharField(
+        verbose_name="Название на узбекском", max_length=128, blank=True
     )
 
     def __str__(self):
-        return self.title
+        return self.title_ru
 
     class Meta:
         verbose_name = "Разрешенная подписка"
         verbose_name_plural = "Разрешенные подписки"
 
-    
+
 class AllowedPeriod(models.Model):
     name = models.CharField(verbose_name="Название", max_length=32)
 
@@ -29,11 +32,11 @@ class AllowedPeriod(models.Model):
 
 
 class Sponsor(models.Model):
-    title = models.CharField(verbose_name="Название", max_length=255)
+    name = models.CharField(verbose_name="Название", max_length=255)
     is_chosen = models.BooleanField(verbose_name="Выбран", default=False)
 
     def __str__(self):
-        return f"{self.pk} {self.title}"
+        return self.name
 
     class Meta:
         verbose_name = "Спонсор"
@@ -62,18 +65,18 @@ class Category(models.Model):
 
 
 class BroadcastCategory(models.Model):
-    title_ru = models.CharField(
+    name_ru = models.CharField(
         verbose_name="Название на русском", max_length=255
     )
-    title_en = models.CharField(
+    name_en = models.CharField(
         verbose_name="Название на английском", max_length=255, blank=True
     )
-    title_uz = models.CharField(
+    name_uz = models.CharField(
         verbose_name="Название на узбекском", max_length=255, blank=True
     )
 
     def __str__(self):
-        return self.title_ru
+        return self.name_ru
 
     class Meta:
         verbose_name = "Категория телеканалов"

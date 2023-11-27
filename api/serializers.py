@@ -8,14 +8,14 @@ class SponsorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Sponsor
-        fields = ("id", "title")
+        fields = ("id", "name")
 
 
 class AllowedSubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.AllowedSubscription
-        fields = ("sub_id", "title")
+        fields = ("id", "title_ru")
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class BroadcastCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.BroadcastCategory
-        fields = ("id", "title_ru")
+        fields = ("id", "name_ru")
 # Internal ended
 
 

@@ -8,7 +8,7 @@ app_name = "api"
 urlpatterns = [
     # Internal
     path("sponsor-list/", views.SponsorListAPIView.as_view()), # DONE
-    path("subscription-list/", views.SubscriptionListAPIView.as_view()), # DONE
+    path("allowed-subscription-list/", views.AllowedSubscriptionListAPIView.as_view()), # DONE
     path("category-list/", views.CategoryListAPIView.as_view()), # DONE
     path("broadcast-category-list/", views.BroadcastCategoryListAPIView.as_view()), # DONE
     # Internal ended

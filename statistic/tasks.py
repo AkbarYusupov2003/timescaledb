@@ -1,7 +1,8 @@
 import datetime
 from collections import Counter
 from django.db import connection
-from django.db.models import F
+from django.db.models import F, Value, CharField
+from django.db.models.functions import Concat
 from celery import shared_task
 from celery.schedules import crontab
 
@@ -33,7 +34,7 @@ def hourly_subscription_task():
 
 
 # History
-@shared_task(name='hourly-history-task')
+@shared_task(name='hourly-history-task') # TODO
 def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(hours=1)
@@ -63,7 +64,7 @@ def hourly_history_task():
                     content.watched_duration += history.duration
                     content.save()
             elif history.broadcast_id:
-                if internal_models.Broadcast.objects.get(
+                if internal_models.Broadcast.objects.get( # TODO exists_or_create for broadcast
                     broadcast_id=history.broadcast_id
                 ):
                     broadcast, created = models.BroadcastHour.objects.get_or_create(
@@ -161,70 +162,161 @@ def daily_history_task():
         monthly_b.save()
     # Monthly ended
 
+
 # Data Update
 @shared_task(name="daily-relations-update-task")
 def daily_relations_update_task():
     # Update Categories
-    
-    # def validate_sponsors(sponsor_pks):
-#     res = []
-#     existing_pks = list(models.Sponsor.objects.filter(pk__in=sponsor_pks).values_list("pk", flat=True))
-#     diff = list(set(sponsor_pks) - set(existing_pks))
-#     print("diff", diff)
-    
-#     data = data_extractor.get_data(
-#         data_extractor.SPONSORS_URL, {"ids": diff}
-#     ).get("results")
-#     if data:
-#         models.Sponsor.objects.bulk_create(
-#             [
-#                 models.Sponsor(
-#                     pk=s["id"], title=s["name"]
-#                 ) for s in data 
-#             ]
-#         )
-#     return res
-    categories = data_extractor.get_data(
-        data_extractor.CATEGORY_URL, {}
-    ).get("results")
-    bulk_create = []
-    if categories:
-        for category in categories:
-            try:
-                cat = internal_models.Category.objects.get(
-                    pk=category["id"]
-                )
-                # check fields
-            except:
-                bulk_create.append(
-                    internal_models.Category(
-                        pk=category["id"], name_ru=category["name_ru"], name_en=category["name_en"], name_uz=category["name_uz"], ordering=category["ordering"]
+    url = data_extractor.CATEGORY_URL
+    while True:
+        data = data_extractor.get_data(
+            url, {}
+        )
+        results = data.get("results")
+        if results:
+            bulk_create = []
+            fields = ("name_ru", "name_en", "name_uz", "ordering")
+            for category in results:
+                try:
+                    existing = internal_models.Category.objects.get(pk=category["id"])       
+                    updated = False
+                    for key, value in category.items():
+                        if key in fields:
+                            if existing.__dict__.get(key) != value:
+                                updated = True
+                                setattr(existing, key, value)
+                    if updated:
+                        existing.save()
+                except internal_models.Category.DoesNotExist:
+                    bulk_create.append(
+                        internal_models.Category(
+                            pk=category["id"], name_ru=category["name_ru"], name_en=category["name_en"], name_uz=category["name_uz"], ordering=category["ordering"]
+                        )
                     )
-                )
+            internal_models.Category.objects.bulk_create(bulk_create)
+
+        next_url = data.get("next")
+        if next_url:
+            url = next_url
+        else:
+            break
     
-        print("categories", categories)
+    # Update Broadcast Categories
+    url = data_extractor.BROADCAST_CATEGORY_URL
+    while True:
+        data = data_extractor.get_data(
+            url, {}
+        )
+        results = data.get("results")
+        if results:
+            bulk_create = []
+            fields = ("name_ru", "name_en", "name_uz")
+            for b_category in results:
+                try:
+                    existing = internal_models.BroadcastCategory.objects.get(pk=b_category["id"])
+                    for key, value in b_category.items():
+                        if key in fields:
+                            if existing.__dict__.get(key) != value:
+                                updated = True
+                                setattr(existing, key, value)
+                    if updated:
+                        existing.save()
+                except internal_models.BroadcastCategory.DoesNotExist:
+                    bulk_create.append(
+                        internal_models.BroadcastCategory(
+                            pk=b_category["id"], name_ru=b_category["name_ru"], name_en=b_category["name_en"], name_uz=b_category["name_uz"]
+                        )
+                    )
+            internal_models.BroadcastCategory.objects.bulk_create(bulk_create)
+
+        next_url = data.get("next")
+        if next_url:
+            url = next_url
+        else:
+            break
+    
     # Update Subs
-    
+    url = data_extractor.SUBSCRIPTIONS_URL
+    while True:
+        data = data_extractor.get_data(
+            url, {}
+        )
+        results = data.get("results")
+        if results:
+            bulk_create = []
+            fields = ("title_ru", "title_en", "title_uz")
+            for sub in results:
+                try:
+                    existing = internal_models.AllowedSubscription.objects.get(pk=sub["id"])
+                    updated = False
+                    for key, value in sub.items():
+                        if key in fields:
+                            if existing.__dict__.get(key) != value:
+                                updated = True
+                                setattr(existing, key, value)
+                    if updated:
+                        existing.save()
+                except internal_models.AllowedSubscription.DoesNotExist:
+                    bulk_create.append(
+                        internal_models.AllowedSubscription(
+                            pk=sub["id"], title_ru=sub["title_ru"], title_en=sub["title_en"], title_uz=sub["title_uz"]
+                        )
+                    )
+            internal_models.AllowedSubscription.objects.bulk_create(bulk_create)    
+        
+        next_url = data.get("next")
+        if next_url:
+            url = next_url
+        else:
+            break
+        
     # Update Sponsors
+    url = data_extractor.SPONSORS_URL
+    while True:
+        data = data_extractor.get_data(
+            url, {}
+        )
+        results = data.get("results")
+        if results:
+            bulk_create = []
+            for sponsor in results:
+                try:
+                    existing = internal_models.Sponsor.objects.get(pk=sponsor["id"])
+                    if existing.name != sponsor.get("name"):
+                        existing.title = sponsor.get("name")
+                        existing.save()
+                except internal_models.Sponsor.DoesNotExist:
+                    bulk_create.append(
+                        internal_models.Sponsor(pk=sponsor["id"], name=sponsor["name"])
+                    )
+            internal_models.Sponsor.objects.bulk_create(set(bulk_create))
+        
+        next_url = data.get("next")
+        if next_url:
+            url = next_url
+        else:
+            break
 
 
-@shared_task(name="daily-data-update-task")
-def daily_data_update_task():
-    # update contents
+@shared_task(name="daily-content-update-task")
+def daily_content_update_task():
     contents = internal_models.Content.objects.all().select_related(
         "category"
     ).prefetch_related("sponsors", "allowed_subscriptions")
+    
+    id_slugs = contents.values_list("slug", flat=True)
+
+    print("CONTENTS", id_slugs)
+    
+    # TODO ПЕРЕДЕЛАТЬ
     for content in contents:
         data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": content.slug}).get("results").get(content.slug)
         if data:
             content_dict = content.__dict__
-            print("data", data)   
-            print("\n")
-            print("content_dict", content_dict)
             updated = False
             for key, value in data.items():
                 if content_dict.get(key) != value:
-                    if not(key == "sponsors" or key == "allowed_subscriptions"):
+                    if not(key == "sponsors" or key == "allowed_subscriptions"): # TODO ADD CATEGORY
                         updated = True
                         setattr(content, key, value)
             
@@ -234,8 +326,8 @@ def daily_data_update_task():
             data_subs = data.get("allowed_subscriptions")
                         
             if content_sponsors != data_sponsors:
-                sponsors = etc.validate_sponsors(data_sponsors)
-                content.sponsors.set(sponsors)
+                # sponsors = etc.validate_sponsors(data_sponsors)
+                content.sponsors.set(data_sponsors)
                 updated = True
                 
             if content_subs != data_subs:
@@ -245,9 +337,6 @@ def daily_data_update_task():
 
             if updated:
                 content.save()
-                print("updated")
-            else:
-                print("not updated")
         else:
             print("no result")
             continue
@@ -258,10 +347,11 @@ app.conf.beat_schedule = {
         "task": "daily-relations-task",
         "schedule": crontab(hour="1", minute="5"),
     },
-    "daily-data-update-task": { # daily-content-update-task
-        "task": "daily-data-update-task",
-        "schedule": crontab(hour="1", minute="10"),
+    "daily-content-update-task": { # 
+        "task": "daily-content-update-task",
+        "schedule": crontab(hour="0", minute="20"),
     },
+    # TODO daily-broadcast-update-task
     #
     "daily-history-task": {
         "task": "hourly-register-task",

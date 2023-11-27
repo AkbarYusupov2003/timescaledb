@@ -55,7 +55,7 @@ class SponsorListAPIView(generics.ListAPIView):
     serializer_class = serializers.SponsorSerializer
 
 
-class SubscriptionListAPIView(generics.ListAPIView):
+class AllowedSubscriptionListAPIView(generics.ListAPIView):
     queryset = internal_models.AllowedSubscription.objects.all()
     serializer_class = serializers.AllowedSubscriptionSerializer
 
@@ -145,7 +145,7 @@ class ContentStatAPIView(generics.GenericAPIView):
         device = request.GET.get("device")
         # ------------------------------------------------------------------------------------------
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
-        allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
+        allowed_subscriptions = internal_models.AllowedSubscription.objects.all().values_list("pk", flat=True)
         qs_filter = {}
 
         raw_filter = []
@@ -227,12 +227,10 @@ class ContentStatAPIView(generics.GenericAPIView):
             raw_filter = " ".join(raw_filter) if raw_filter else ""
             episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
             print("raw", raw_filter)
-            
             query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration)
                         FROM {table_name}
                         WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id} {raw_filter}
                         GROUP BY interval, watched_users_count, watched_duration"""
-            
             print("query", query)
             cursor.execute(query)
             stat =  cursor.fetchall()
@@ -247,27 +245,6 @@ class ContentStatAPIView(generics.GenericAPIView):
 
             content.update({"watched_users": watched_users, "watched_duration": watched_duration})
             res.append(content)
-
-        # for content in queryset:
-        #     cursor = connection.cursor()
-        #     cursor.execute(
-        #         f"""
-        #             SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, watched_duration, age_group::json, gender::json
-        #             FROM {table_name}
-        #             WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND
-        #                   (content_id = '{content.content_id}')
-        #                   {f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""}
-        #         """
-        #     )
-        #     stat =  cursor.fetchone()
-        #     content = self.serializer_class(content).data
-        #     content.update({"watched_users": 0, "watched_duration": 0, "age_group": {}, "gender": {}})
-        #     if stat:
-        #         content["watched_users"] = stat[1]
-        #         content["watched_duration"] = stat[2]
-        #         content["age_group"] = stat[3]
-        #         content["gender"] = stat[4]
-        #     res.append(content)
 
         if ordering == "watched_users":
             res = sorted(res, key=lambda d: d["watched_users"])[offset:limit+offset]
@@ -350,7 +327,7 @@ class SubscriptionStatAPIView(APIView):
         sub_id = self.request.GET.get("sub_id")
         # validation
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
-        allowed_subs = internal_models.AllowedSubscription.objects.all().values_list("sub_id", flat=True)
+        allowed_subs = internal_models.AllowedSubscription.objects.all().values_list("pk", flat=True)
         if not(period in allowed_periods):
             return Response({"error": "period validation"}, status=400)
         if sub_id and not(sub_id in allowed_subs):
