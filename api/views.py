@@ -86,7 +86,7 @@ class CreateHistoryAPIView(APIView):
             episode_id = int(request.data.get('episode_id', 0))
             sid = splay_data["sid"]# "sdgt21gknmg'l3kwgnnk"
             country = splay_data["c_code"]["country_code"] # "UZ"
-            gender = splay_data.get("gender", "M") # splay_data["gender"] # "M"
+            gender = "M" # splay_data["gender"] # "M"
             age = utils.get_group_by_age(splay_data["age"]) # utils.get_group_by_age(19)
             device = splay_data.get("device", "PC") # splay_data["device"]
         except Exception as e:
@@ -160,6 +160,7 @@ class ContentStatAPIView(generics.GenericAPIView):
             return Response({"error": "period validation"}, status=400)
 
         if search:
+            # TODO
             qs_filter["title_ru__icontains"] = search
 
         if sub_id:
@@ -203,8 +204,8 @@ class ContentStatAPIView(generics.GenericAPIView):
                 table_name = "statistic_content_month"
             else:
                 return Response({"error": "period validation"}, status=400)
-        except Exception as e:
-            return Response({"error": e}, status=400)
+        except:
+            return Response({"error": "date validation"}, status=400)
 
         queryset = self.queryset.filter(**qs_filter)
 
@@ -261,20 +262,20 @@ class ContentStatAPIView(generics.GenericAPIView):
 
 class ContentStatDetailAPIView(APIView):
     serializer_class = serializers.ContentSerializer
-    
+
     def get(self, request, *args, **kwargs):
         content = get_object_or_404(
-            internal_models.Content,
+            internal_models.Content.objects.select_related("category").prefetch_related("sponsors", "allowed_subscriptions"),
             slug=kwargs["slug"]
         )
         from_date = request.GET.get("from_date")
         to_date = request.GET.get("to_date")
         period = request.GET.get("period")
         allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
-        
+
         if not(period in allowed_periods):
             return Response({"error": "period validation"}, status=400)
-        
+
         try:
             date_format = "%Y-%m-%d-%H:%M"
             from_date = datetime.datetime.strptime(from_date, date_format)
@@ -287,17 +288,22 @@ class ContentStatDetailAPIView(APIView):
                 table_name = "statistic_content_month"
             else:
                 return Response({"error": "period validation"}, status=400)
-        except Exception as e:
-            return Response({"error": e}, status=400)
-        
-        # мужчины, женщины, дети
+        except:
+            return Response({"error": "date validation"}, status=400)
+
+        children_groups = ("0", "1", "2",)
+        gender_counter = f"""
+            COUNT(*) FILTER (WHERE gender = 'M' AND age_group NOT IN {children_groups}) AS men,
+            COUNT(*) FILTER (WHERE gender = 'W' AND age_group NOT IN {children_groups}) AS women, 
+            COUNT(*) FILTER ( WHERE age_group IN {children_groups} ) AS children
+        """
         cursor = connection.cursor()
         episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration)
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), {gender_counter}
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id}
-                    GROUP BY interval, watched_users_count, watched_duration"""
-        
+                    GROUP BY interval, watched_users_count"""
+
         print("query", query)
         cursor.execute(query)
         stat =  cursor.fetchall()
@@ -305,15 +311,21 @@ class ContentStatDetailAPIView(APIView):
         print("\n")
         content = self.serializer_class(content).data
 
-        watched_users = watched_duration = 0
+        watched_users = men = women = children = 0
+        
+        # {"times": ""}
+        helper = []
+        
         for s in stat:
-            watched_users += s[1]
-            watched_duration += s[2]
-
-        content.update({"watched_users": watched_users, "watched_duration": watched_duration})
+            helper.append(
+                {"time": s[0], "watched_users": s[1], "men": s[2], "women": s[3], "children": s[4]}
+            )
+            
+        # content.update({"watched_users": watched_users, "men": men, "women": women, "children": children})
+        content["results"] = helper
         
         print("CONTENT", content)
-        return Response({}, status=200)
+        return Response(content, status=200)
     
 
 # TODO Broadcast

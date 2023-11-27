@@ -1,12 +1,23 @@
 import jwt
 
-
+AGE_GROUP_LIST = (
+        (0, (0,6)),
+        (1, (7,12)),
+        (2, (13,15)),
+        (3, (16,18)),
+        (4, (19,21)),
+        (5, (22,28)),
+        (6, (29,36)),
+        (7, (37,46)),
+        (8, (47,54)),
+        (9, (55,999)),
+    )
 def get_group_by_age(age):
     if age <= 6:
         return 0
     elif age <= 12:
         return 1
-    elif age <= 16:
+    elif age <= 15:
         return 2
     elif age <= 18:
         return 3
