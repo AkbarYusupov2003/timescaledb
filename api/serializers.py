@@ -22,7 +22,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Category
-        fields = ("id", "title_ru")
+        fields = ("id", "name_ru")
 
 
 class BroadcastCategorySerializer(serializers.ModelSerializer):

@@ -11,6 +11,7 @@ from internal import models as internal_models
 from statistic.utils import data_extractor, etc
 
 
+# Register
 @shared_task(name='hourly-register-task')
 def hourly_register_task():
     period = "hours"
@@ -20,6 +21,7 @@ def hourly_register_task():
         models.Register.objects.create(count=data.get("count", 0), time=time)
 
 
+# Subscription
 @shared_task(name='hourly-subscription-task')
 def hourly_subscription_task():
     period = "hours"
@@ -30,6 +32,7 @@ def hourly_subscription_task():
             models.Subscription.objects.create(sub_id=key, count=value, time=time)
 
 
+# History
 @shared_task(name='hourly-history-task')
 def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
@@ -158,6 +161,52 @@ def daily_history_task():
         monthly_b.save()
     # Monthly ended
 
+# Data Update
+@shared_task(name="daily-relations-update-task")
+def daily_relations_update_task():
+    # Update Categories
+    
+    # def validate_sponsors(sponsor_pks):
+#     res = []
+#     existing_pks = list(models.Sponsor.objects.filter(pk__in=sponsor_pks).values_list("pk", flat=True))
+#     diff = list(set(sponsor_pks) - set(existing_pks))
+#     print("diff", diff)
+    
+#     data = data_extractor.get_data(
+#         data_extractor.SPONSORS_URL, {"ids": diff}
+#     ).get("results")
+#     if data:
+#         models.Sponsor.objects.bulk_create(
+#             [
+#                 models.Sponsor(
+#                     pk=s["id"], title=s["name"]
+#                 ) for s in data 
+#             ]
+#         )
+#     return res
+    categories = data_extractor.get_data(
+        data_extractor.CATEGORY_URL, {}
+    ).get("results")
+    bulk_create = []
+    if categories:
+        for category in categories:
+            try:
+                cat = internal_models.Category.objects.get(
+                    pk=category["id"]
+                )
+                # check fields
+            except:
+                bulk_create.append(
+                    internal_models.Category(
+                        pk=category["id"], name_ru=category["name_ru"], name_en=category["name_en"], name_uz=category["name_uz"], ordering=category["ordering"]
+                    )
+                )
+    
+        print("categories", categories)
+    # Update Subs
+    
+    # Update Sponsors
+
 
 @shared_task(name="daily-data-update-task")
 def daily_data_update_task():
@@ -165,11 +214,8 @@ def daily_data_update_task():
     contents = internal_models.Content.objects.all().select_related(
         "category"
     ).prefetch_related("sponsors", "allowed_subscriptions")
-    slugs = [{"slug": "7635_14946"}]
     for content in contents:
-        # content
-        slug = slugs[0]["slug"]
-        data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": slug}).get("results").get(slug)
+        data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": content.slug}).get("results").get(content.slug)
         if data:
             content_dict = content.__dict__
             print("data", data)   
@@ -186,49 +232,52 @@ def daily_data_update_task():
             content_subs = list(content.allowed_subscriptions.all().values_list("pk", flat=True))
             data_sponsors = data.get("sponsors")
             data_subs = data.get("allowed_subscriptions")
-            
+                        
             if content_sponsors != data_sponsors:
-                content.sponsors.set(data_sponsors)
+                sponsors = etc.validate_sponsors(data_sponsors)
+                content.sponsors.set(sponsors)
                 updated = True
                 
             if content_subs != data_subs:
+                # subs = etc.validate_allowed_subscriptions()
                 content.allowed_subscriptions.set(data_subs)
                 updated = True
 
             if updated:
-                print("updating")
                 content.save()
+                print("updated")
+            else:
+                print("not updated")
         else:
             print("no result")
             continue
-    
-    # update broadcasts
-    pass
-
-
-# # TODO
-# def synchronize_content_task():
-#     data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": ""}) 
-#     print("DATA: ", data)
 
 
 app.conf.beat_schedule = {
-    'daily-history-task': {
-        'task': 'hourly-register-task',
-        'schedule': crontab(minute='5', hour='0'),
+    "daily-relations-update-task": {
+        "task": "daily-relations-task",
+        "schedule": crontab(hour="1", minute="5"),
     },
-    'hourly-history-task': {
-        'task': 'hourly-history-task',
-        'schedule': crontab(minute='0', hour='*'),
+    "daily-data-update-task": { # daily-content-update-task
+        "task": "daily-data-update-task",
+        "schedule": crontab(hour="1", minute="10"),
     },
     #
-    'hourly-register-task ': {
-        'task': 'hourly-register-task',
-        'schedule': crontab(minute='1', hour='*'),
+    "daily-history-task": {
+        "task": "hourly-register-task",
+        "schedule": crontab(hour="0", minute="10"),
     },
-    'hourly-subscription-task': {
-        'task': 'hourly-subscription-task',
-        'schedule': crontab(minute='2', hour='*'),
+    "hourly-history-task": {
+        "task": "hourly-history-task",
+        "schedule": crontab(hour="*", minute="0"),
     },
-    
+    #
+    "hourly-register-task": {
+        "task": "hourly-register-task",
+        "schedule": crontab(hour="*", minute="1"),
+    },
+    "hourly-subscription-task": {
+        "task": "hourly-subscription-task",
+        "schedule": crontab(hour="*", minute="2"),
+    },
 }

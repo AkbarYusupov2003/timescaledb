@@ -41,22 +41,24 @@ class Sponsor(models.Model):
 
 
 class Category(models.Model):
-    title_ru = models.CharField(
+    name_ru = models.CharField(
         verbose_name="Название на русском", max_length=255
     )
-    title_en = models.CharField(
+    name_en = models.CharField(
         verbose_name="Название на английском", max_length=255, blank=True
     )
-    title_uz = models.CharField(
+    name_uz = models.CharField(
         verbose_name="Название на узбекском", max_length=255, blank=True
     )
+    ordering = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
-        return self.title_ru
+        return self.name_ru
 
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+        ordering = ("ordering",)
 
 
 class BroadcastCategory(models.Model):

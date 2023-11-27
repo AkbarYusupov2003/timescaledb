@@ -8,7 +8,7 @@ SUBSCRIPTIONS_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/subscriptions/?
 CONTENT_DATA_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/content-data/'
 BROADCAST_CATEGORY_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/broadcast-category/?limit=100'
 BROADCAST_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/broadcast/?limit=1000'
-CONTENT_SPONSOR_SUBS_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/content-sponsor-subscriptions/?limit=1000'
+# CONTENT_SPONSOR_SUBS_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/content-sponsor-subscriptions/?limit=1000'
 PROFILES_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/profiles'
 TRANSACTION_URL = 'https://billing.splay.uz/api/v1/transaction-stat/'
 SIGNUP_URL = 'https://api.splay.uz/en/api/v2/sevimlistat/account_registration/'
@@ -25,4 +25,3 @@ def get_data(url, params):
         except IOError as e:
             count += 1
     return result
-    

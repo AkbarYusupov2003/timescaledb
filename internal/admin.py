@@ -24,7 +24,7 @@ class SponsorAdmin(admin.ModelAdmin):
 
 @admin.register(models.Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title_ru", )
+    list_display = ("pk", "name_ru", "ordering")
 
 
 @admin.register(models.BroadcastCategory)
