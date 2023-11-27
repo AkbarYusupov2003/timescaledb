@@ -304,42 +304,41 @@ def daily_content_update_task():
         "category"
     ).prefetch_related("sponsors", "allowed_subscriptions")
     
-    id_slugs = contents.values_list("slug", flat=True)
-
-    print("CONTENTS", id_slugs)
-    
-    # TODO ПЕРЕДЕЛАТЬ
     for content in contents:
         data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": content.slug}).get("results").get(content.slug)
-        if data:
-            content_dict = content.__dict__
-            updated = False
-            for key, value in data.items():
-                if content_dict.get(key) != value:
-                    if not(key == "sponsors" or key == "allowed_subscriptions"): # TODO ADD CATEGORY
-                        updated = True
-                        setattr(content, key, value)
-            
-            content_sponsors = list(content.sponsors.all().values_list("pk", flat=True))
-            content_subs = list(content.allowed_subscriptions.all().values_list("pk", flat=True))
-            data_sponsors = data.get("sponsors")
-            data_subs = data.get("allowed_subscriptions")
-                        
-            if content_sponsors != data_sponsors:
-                # sponsors = etc.validate_sponsors(data_sponsors)
-                content.sponsors.set(data_sponsors)
-                updated = True
-                
-            if content_subs != data_subs:
-                # subs = etc.validate_allowed_subscriptions()
-                content.allowed_subscriptions.set(data_subs)
-                updated = True
+        content_dict = content.__dict__
+        print("\n")
+        print("content dict: ", content_dict)
+        print("\n")
+        print("data: ", data)
+        for key, value in data.items():
+            if content_dict.get(key) != value:
+                if not(key=="category" or key == "sponsors" or key == "allowed_subscriptions"):
+                    setattr(content, key, value)
 
-            if updated:
-                content.save()
-        else:
-            print("no result")
-            continue
+        content_sponsors = list(content.sponsors.all().values_list("pk", flat=True))
+        content_subscriptions = list(content.allowed_subscriptions.all().values_list("pk", flat=True))
+        
+        if content_dict.get("category_id") != data.get("category_id"):
+            if data.get("category_id"):
+                if etc.is_category_valid(value):
+                    content.category_id = value
+            else:
+                content.category = None
+
+        if content_subscriptions != data.get("allowed_subscriptions"):
+            if data.get("allowed_subscriptions"):
+                content.allowed_subscriptions.set(etc.validate_subscriptions(data.get("allowed_subscriptions")))
+            else:
+                content.allowed_subscriptions.set([])
+
+        if content_sponsors != data.get("sponsors"):
+            if data.get("sponsors"):
+                content.sponsors.set(etc.validate_sponsors(data.get("sponsors")))
+            else:
+                content.sponsors.set([])
+
+        content.save()
 
 
 app.conf.beat_schedule = {

@@ -15,6 +15,7 @@ urlpatterns = [
     path("create-history/", views.CreateHistoryAPIView.as_view()), # TODO
     #
     path("content-stat/", views.ContentStatAPIView.as_view()),
+    path("content-stat/<slug:slug>/", views.ContentStatDetailAPIView.as_view()),
     # path("broadcast-stat/", views.BroadcastListAPIView.as_view()),
     #
     path("register-stat/", views.RegisterStatAPIView.as_view()), # DONE

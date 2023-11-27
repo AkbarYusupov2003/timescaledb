@@ -30,7 +30,8 @@ class BroadcastCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(models.Content)
 class ContentAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title_ru", "content_id", "episode_id", "is_russian")
+    list_display = ("pk", "title_ru", "content_id", "episode_id", "slug", "is_russian")
+    filter_horizontal = ("sponsors", "allowed_subscriptions")
 
 
 @admin.register(models.Broadcast)

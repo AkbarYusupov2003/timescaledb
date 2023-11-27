@@ -2,6 +2,7 @@ import json
 import datetime
 from django.db import connection
 from django.db.models import Sum, Q
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -257,6 +258,65 @@ class ContentStatAPIView(generics.GenericAPIView):
 
         return Response(res, status=200)
 
+
+class ContentStatDetailAPIView(APIView):
+    serializer_class = serializers.ContentSerializer
+    
+    def get(self, request, *args, **kwargs):
+        content = get_object_or_404(
+            internal_models.Content,
+            slug=kwargs["slug"]
+        )
+        from_date = request.GET.get("from_date")
+        to_date = request.GET.get("to_date")
+        period = request.GET.get("period")
+        allowed_periods = internal_models.AllowedPeriod.objects.all().values_list("name", flat=True)
+        
+        if not(period in allowed_periods):
+            return Response({"error": "period validation"}, status=400)
+        
+        try:
+            date_format = "%Y-%m-%d-%H:%M"
+            from_date = datetime.datetime.strptime(from_date, date_format)
+            to_date = datetime.datetime.strptime(to_date, date_format)
+            if period == "hours":
+                table_name = "statistic_content_hour"
+            elif period == "day":
+                table_name = "statistic_content_day"
+            elif period == "month":
+                table_name = "statistic_content_month"
+            else:
+                return Response({"error": "period validation"}, status=400)
+        except Exception as e:
+            return Response({"error": e}, status=400)
+        
+        # мужчины, женщины, дети
+        cursor = connection.cursor()
+        episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, Sum(watched_users_count), Sum(watched_duration)
+                    FROM {table_name}
+                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id}
+                    GROUP BY interval, watched_users_count, watched_duration"""
+        
+        print("query", query)
+        cursor.execute(query)
+        stat =  cursor.fetchall()
+        print("STAT: ", stat)
+        print("\n")
+        content = self.serializer_class(content).data
+
+        watched_users = watched_duration = 0
+        for s in stat:
+            watched_users += s[1]
+            watched_duration += s[2]
+
+        content.update({"watched_users": watched_users, "watched_duration": watched_duration})
+        
+        print("CONTENT", content)
+        return Response({}, status=200)
+    
+
+# TODO Broadcast
 
 # Register
 class RegisterStatAPIView(APIView):

@@ -2,35 +2,25 @@ from statistic.utils import data_extractor
 from internal import models
 
 
-# def validate_category(pk):
-#     pass
+def is_category_valid(pk):
+    try:
+        models.Category.objects.get(pk=pk)
+        return True
+    except:
+        return False
 
 
-# def validate_sponsors(sponsor_pks):
-#     res = []
-#     existing_pks = list(models.Sponsor.objects.filter(pk__in=sponsor_pks).values_list("pk", flat=True))
-#     diff = list(set(sponsor_pks) - set(existing_pks))
-#     print("diff", diff)
-    
-#     data = data_extractor.get_data(
-#         data_extractor.SPONSORS_URL, {"ids": diff}
-#     ).get("results")
-#     if data:
-#         models.Sponsor.objects.bulk_create(
-#             [
-#                 models.Sponsor(
-#                     pk=s["id"], title=s["name"]
-#                 ) for s in data 
-#             ]
-#         )
-#     return res
+def validate_subscriptions(pks):
+    existing_pks = list(models.AllowedSubscription.objects.filter(pk__in=pks).values_list("pk", flat=True))
+    return set(existing_pks).intersection(pks)
 
 
-# def validate_subscriptions(sub_pks):
-#     pass
+def validate_sponsors(pks):
+    existing_pks = list(models.Sponsor.objects.filter(pk__in=pks).values_list("pk", flat=True))
+    return set(existing_pks).intersection(pks)
 
 
-def exists_or_create(data, slug):
+def exists_or_create(data, slug): # TODO
     instance = models.Content.objects.filter(**data).first()
     if instance:
         return True
