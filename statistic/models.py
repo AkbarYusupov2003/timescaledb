@@ -46,14 +46,8 @@ class ContentHour(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
-    age_group_count = models.PositiveIntegerField(
-        verbose_name="Количество возрастной группы", default=0
-    )
     gender = models.CharField(
         verbose_name="Пол", choices=GENDERS
-    )
-    gender_count = models.PositiveIntegerField(
-        verbose_name="Количество пола", default=0
     )
     #
     country = models.CharField(
@@ -88,14 +82,8 @@ class ContentDay(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
-    age_group_count = models.PositiveIntegerField(
-        verbose_name="Количество возрастной группы", default=0
-    )
     gender = models.CharField(
         verbose_name="Пол", choices=GENDERS
-    )
-    gender_count = models.PositiveIntegerField(
-        verbose_name="Количество пола", default=0
     )
     #
     country = models.CharField(
@@ -130,14 +118,8 @@ class ContentMonth(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
-    age_group_count = models.PositiveIntegerField(
-        verbose_name="Количество возрастной группы", default=0
-    )
     gender = models.CharField(
         verbose_name="Пол", choices=GENDERS
-    )
-    gender_count = models.PositiveIntegerField(
-        verbose_name="Количество пола", default=0
     )
     #
     country = models.CharField(
@@ -170,14 +152,8 @@ class BroadcastHour(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
-    age_group_count = models.PositiveIntegerField(
-        verbose_name="Количество возрастной группы", default=0
-    )
     gender = models.CharField(
         verbose_name="Пол", choices=GENDERS
-    )
-    gender_count = models.PositiveIntegerField(
-        verbose_name="Количество пола", default=0
     )
     #
     country = models.CharField(
@@ -209,14 +185,8 @@ class BroadcastDay(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
-    age_group_count = models.PositiveIntegerField(
-        verbose_name="Количество возрастной группы", default=0
-    )
     gender = models.CharField(
         verbose_name="Пол", choices=GENDERS
-    )
-    gender_count = models.PositiveIntegerField(
-        verbose_name="Количество пола", default=0
     )
     #
     country = models.CharField(
@@ -248,14 +218,8 @@ class BroadcastMonth(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
-    age_group_count = models.PositiveIntegerField(
-        verbose_name="Количество возрастной группы", default=0
-    )
     gender = models.CharField(
         verbose_name="Пол", choices=GENDERS
-    )
-    gender_count = models.PositiveIntegerField(
-        verbose_name="Количество пола", default=0
     )
     #
     country = models.CharField(

@@ -1,8 +1,5 @@
 import datetime
-from collections import Counter
-from django.db import connection
 from django.db.models import F, Value, CharField
-from django.db.models.functions import Concat
 from celery import shared_task
 from celery.schedules import crontab
 
@@ -59,8 +56,6 @@ def hourly_history_task():
                     if created:
                         content.watched_users_count = 1
 
-                    content.age_group_count += 1
-                    content.gender_count += 1
                     content.watched_duration += history.duration
                     content.save()
             elif history.broadcast_id:
@@ -75,8 +70,6 @@ def hourly_history_task():
                     if created:
                         broadcast.watched_users_count = 1
                     
-                    broadcast.age_group_count += 1
-                    broadcast.gender_count += 1
                     broadcast.watched_duration += history.duration
                     broadcast.save()
         except Exception as e:
@@ -86,10 +79,10 @@ def hourly_history_task():
 
 @shared_task(name="daily-history-task")
 def daily_history_task():
-    # to_time = datetime.date.today()
-    # from_time = to_time - datetime.timedelta(days=1) # Yesterday
-    from_time = datetime.date.today() # Yesterday
-    to_time = from_time + datetime.timedelta(days=1)
+    to_time = datetime.date.today()
+    from_time = to_time - datetime.timedelta(days=1) # Yesterday
+    # from_time = datetime.date.today() # Yesterday
+    # to_time = from_time + datetime.timedelta(days=1)
     
     # DAILY
     # Content
@@ -107,8 +100,6 @@ def daily_history_task():
             if created:
                 daily_c.watched_users_count = 1
 
-            daily_c.age_group_count += 1
-            daily_c.gender_count += 1
             daily_c.watched_duration += history.duration
             daily_c.save()
     
@@ -126,8 +117,6 @@ def daily_history_task():
             if created:
                 daily_b.watched_users_count = 1
 
-            daily_c.age_group_count += 1
-            daily_c.gender_count += 1
             daily_b.watched_duration += history.duration
             daily_b.save()
     # Daily ended
@@ -141,8 +130,6 @@ def daily_history_task():
             sid=content.sid, age_group=content.age_group, gender=content.gender, country=content.country, device=content.device
         )
 
-        monthly_c.age_group_count += content.age_group_count
-        monthly_c.gender_count += content.gender_count
         monthly_c.watched_users_count += content.watched_users_count
         monthly_c.watched_duration += content.watched_duration
         monthly_c.save()
@@ -155,8 +142,6 @@ def daily_history_task():
             sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender,  country=broadcast.country, device=broadcast.device
         )
 
-        monthly_b.age_group_count += broadcast.age_group_count
-        monthly_b.gender_count += broadcast.gender_count
         monthly_b.watched_users_count += broadcast.watched_users_count
         monthly_b.watched_duration += broadcast.watched_duration
         monthly_b.save()
@@ -200,7 +185,7 @@ def daily_relations_update_task():
             url = next_url
         else:
             break
-    
+
     # Update Broadcast Categories
     url = data_extractor.BROADCAST_CATEGORY_URL
     while True:

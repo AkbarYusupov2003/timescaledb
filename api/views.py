@@ -233,19 +233,24 @@ class ContentStatAPIView(generics.GenericAPIView):
                         FROM {table_name}
                         WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id} {raw_filter}
                         GROUP BY interval, watched_users_count, watched_duration"""
+                        
             print("query", query)
             cursor.execute(query)
             stat =  cursor.fetchall()
             print("STAT: ", stat)
             print("\n")
             content = self.serializer_class(content).data
-
-            watched_users = watched_duration = 0
+            total_watched_users = total_watched_duration = 0
+            # try:
+            #     time = stat[0][0]
+            # except:
+            #     time = ""
+            # content["time"] = time
             for s in stat:
-                watched_users += s[1]
-                watched_duration += s[2]
-
-            content.update({"watched_users": watched_users, "watched_duration": watched_duration})
+                total_watched_users += s[1]
+                total_watched_duration += s[2]
+            content["watched_users"] = total_watched_users
+            content["watched_duration"] = total_watched_duration
             res.append(content)
 
         if ordering == "watched_users":
@@ -292,11 +297,9 @@ class ContentStatDetailAPIView(APIView):
             return Response({"error": "date validation"}, status=400)
 
         children_groups = ("0", "1", "2",)
-        gender_counter = f"""
-            COUNT(*) FILTER (WHERE gender = 'M' AND age_group NOT IN {children_groups}) AS men,
-            COUNT(*) FILTER (WHERE gender = 'W' AND age_group NOT IN {children_groups}) AS women, 
-            COUNT(*) FILTER ( WHERE age_group IN {children_groups} ) AS children
-        """
+        gender_counter = f"""SUM(watched_users_count) FILTER (WHERE gender = 'M') AS men,
+                             SUM(watched_users_count) FILTER (WHERE gender = 'W') AS women"""
+                             # COUNT(*) FILTER ( WHERE age_group IN {children_groups} ) AS children"""
         cursor = connection.cursor()
         episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
         query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), {gender_counter}, age_group
@@ -304,22 +307,77 @@ class ContentStatDetailAPIView(APIView):
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (content_id = '{content.content_id}') {episode_id}
                     GROUP BY interval, watched_users_count, age_group"""
 
-        print("query", query)
         cursor.execute(query)
         stat =  cursor.fetchall()
-        print("STAT: ", stat)
-        print("\n")
         content = self.serializer_class(content).data
 
-        helper = []
+        data = []        
+        # "results": [
+        #     {
+        #         "time": "2023-11-27T16:00:00",
+        #         "watched_users": 1,
+        #         "men": 0,
+        #         "women": 0,
+        #         "children": 1,
+        #         "age_group": "0"
+        #     },
+        #     {
+        #         "time": "2023-11-27T16:00:00",
+        #         "watched_users": 2,
+        #         "men": 2,
+        #         "women": 0,
+        #         "children": 0,
+        #         "age_group": "4"
+        #     }
+        # ]
+        print("STAT", stat)
+        
+        
+        children = {"0": 0, "1": 0, "2": 0}
+        men = {"3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0}
+        women = {"3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0}
+        total_watched_users = 0
         
         for s in stat:
-            helper.append(
-                {"time": s[0], "watched_users": s[1], "men": s[2], "women": s[3], "children": s[4], "age_group": s[5]}
-            )
+            print("s:", s)
+            exists = False
+            for val in data:
+                if val.get("time") == s[0]:
+                    val["watched_users"] +=  s[1]
+                    exists = True
+            if not exists:
+                data.append({"time": s[0], "watched_users": s[1],})
             
-        content["results"] = helper        
-        print("CONTENT", content)
+            age_group = s[4]
+            
+            
+            if age_group in children:
+                children[age_group] += s[1]
+            else:
+                if s[2]:
+                    men[age_group] += s[2]
+                if s[3]:
+                    women[age_group] += s[3]
+                
+            total_watched_users += s[1]
+        
+        men_total = sum(men.values())
+        
+        print("men_total", men_total)
+                
+        
+        men["percentage"] = 55
+        
+        
+        women["percentage"] = 1
+        children["percentage"] = 1
+        
+        content["data"] = data
+        content["total_watched_users"] = total_watched_users
+        content["men"] = men
+        content["women"] = women
+        content["children"] = children
+        
         return Response(content, status=200)
     
 
