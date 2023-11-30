@@ -46,6 +46,14 @@ class ContentSerializer(serializers.ModelSerializer):
         )
 
 
+class BroadcastSerializer(serializers.ModelSerializer):
+    category = BroadcastCategorySerializer()
+    
+    class Meta:
+        model = models.Broadcast
+        fields = ("broadcast_id", "title", "quality", "category")
+
+
 # ------------------------------------------------------------------------------------
 class RegisterSerializer(serializers.Serializer):
     time = serializers.SerializerMethodField(source="get_time")

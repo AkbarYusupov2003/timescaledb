@@ -2,6 +2,8 @@ from django.db import models
 from timescale.db.models.fields import TimescaleDateTimeField
 from timescale.db.models.managers import TimescaleManager
 
+from internal.models import Category, Broadcast
+
 
 AGE_GROUPS = (
     ("0", "0-6"),
@@ -50,15 +52,6 @@ class ContentHour(TimescaleModel):
         verbose_name="Пол", choices=GENDERS
     )
     #
-    country = models.CharField(
-        verbose_name="Страна", max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
-    )
-    watched_users_count = models.PositiveIntegerField(
-        verbose_name="Количество просмотров", default=0
-    )
     watched_duration = models.PositiveIntegerField(
         verbose_name="Время просмотров", default=0
     )
@@ -86,15 +79,6 @@ class ContentDay(TimescaleModel):
         verbose_name="Пол", choices=GENDERS
     )
     #
-    country = models.CharField(
-        verbose_name="Страна", max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
-    )
-    watched_users_count = models.PositiveIntegerField(
-        verbose_name="Количество просмотров", default=0
-    )
     watched_duration = models.PositiveIntegerField(
         verbose_name="Время просмотров", default=0
     )
@@ -122,12 +106,6 @@ class ContentMonth(TimescaleModel):
         verbose_name="Пол", choices=GENDERS
     )
     #
-    country = models.CharField(
-        verbose_name="Страна", max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
-    )
     watched_users_count = models.PositiveIntegerField(
         verbose_name="Количество просмотров", default=0
     )
@@ -156,15 +134,6 @@ class BroadcastHour(TimescaleModel):
         verbose_name="Пол", choices=GENDERS
     )
     #
-    country = models.CharField(
-        verbose_name="Страна", max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
-    )
-    watched_users_count = models.PositiveIntegerField(
-        verbose_name="Количество просмотров", default=0
-    )
     watched_duration = models.PositiveIntegerField(
         verbose_name="Время просмотров", default=0
     )
@@ -189,15 +158,6 @@ class BroadcastDay(TimescaleModel):
         verbose_name="Пол", choices=GENDERS
     )
     #
-    country = models.CharField(
-        verbose_name="Страна", max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
-    )
-    watched_users_count = models.PositiveIntegerField(
-        verbose_name="Количество просмотров", default=0
-    )
     watched_duration = models.PositiveIntegerField(
         verbose_name="Время просмотров", default=0
     )
@@ -222,12 +182,6 @@ class BroadcastMonth(TimescaleModel):
         verbose_name="Пол", choices=GENDERS
     )
     #
-    country = models.CharField(
-        verbose_name="Страна", max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
-    )
     watched_users_count = models.PositiveIntegerField(
         verbose_name="Количество просмотров", default=0
     )
@@ -258,13 +212,6 @@ class History(TimescaleModel):
     user_agent = models.CharField(max_length=128)
     ip_address = models.CharField(
         verbose_name=("IP адрес"), max_length=16
-    )
-    country = models.CharField(
-        verbose_name=("Страна"),
-        max_length=32
-    )
-    device = models.CharField(
-        verbose_name=("Устройство"), max_length=64
     )
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
@@ -306,19 +253,20 @@ class Subscription(TimescaleModel):
 
 class Report(models.Model):
     STATUSES = (
-        ("PENDING", "В ожидании"),
-        ("STARTED", "В исполнении"),
-        ("FAILURE", "Ошибка"),
+        ("GENERATING", "Генерируется"),
+        ("FAILED", "Ошибка"),
         ("FINISHED", "Завершен")
     )
 
     status = models.CharField(verbose_name="Статус", choices=STATUSES, default="PENDING")
     group = models.CharField(verbose_name="Группа", max_length=128)
-    rows_count = models.PositiveIntegerField(verbose_name="Количество строк", null=True, blank=True)
     data = models.JSONField(verbose_name="Данные", default=dict, blank=True, null=True)
     file = models.FileField(
         verbose_name="Файл", upload_to="reports/%Y/%m/%d", null=True, blank=True
     )
+    rows_count = models.PositiveIntegerField(verbose_name="Количество строк", null=True, blank=True)
+    progress = models.PositiveSmallIntegerField(verbose_name="Прогресс генерации",default=0)
+    is_downloaded = models.BooleanField(verbose_name="Скачан ли", default=False)
     created_at = models.DateTimeField(
         verbose_name="Создано", auto_now_add=True
     )

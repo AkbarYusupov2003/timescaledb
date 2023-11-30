@@ -1,5 +1,8 @@
 import jwt
 
+
+ALLOWED_PERIODS = ("hours", "day", "month")
+
 AGE_GROUP_LIST = (
         (0, (0,6)),
         (1, (7,12)),
@@ -12,6 +15,8 @@ AGE_GROUP_LIST = (
         (8, (47,54)),
         (9, (55,999)),
     )
+
+
 def get_group_by_age(age):
     if age <= 6:
         return 0
@@ -40,5 +45,4 @@ def get_data_from_token(token):
         data = jwt.decode(token, options={"verify_signature": False})
         return data
     except Exception as e:
-        print("Exception", e)
-        return "" # Exception({"error": "token validation"})
+        return None

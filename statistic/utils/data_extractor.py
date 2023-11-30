@@ -9,9 +9,9 @@ SUBSCRIPTIONS_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/subscriptions/?
 SPONSORS_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/sponsors/?limit=5000'
 
 CONTENT_DATA_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/content-data/'
-BROADCAST_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/broadcast/?limit=1000'
+BROADCAST_DATA_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/broadcast/?limit=1000'
+BROADCAST_DETAIL_URL = "http://192.168.0.130:8001/ru/api/v3/statistics/broadcast/{}/"
 
-# TODO Profile stat
 PROFILES_URL = f'{settings.SPLAY_HOST}/ru/api/v3/statistics/profiles'
 
 # Subscription stat

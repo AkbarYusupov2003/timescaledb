@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from config.celery import app
 from statistic import models
 from internal import models as internal_models
-from statistic.utils import data_extractor, etc
+from statistic.utils import data_extractor, etc, validators
 
 
 # Register
@@ -31,7 +31,7 @@ def hourly_subscription_task():
 
 
 # History
-@shared_task(name='hourly-history-task') # TODO
+@shared_task(name='hourly-history-task')
 def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(hours=1)
@@ -44,32 +44,22 @@ def hourly_history_task():
     for history in histories:
         try:
             if history.content_id:
-                if etc.exists_or_create(
+                if etc.is_content_exists_or_create(
                     {"content_id": history.content_id, "episode_id": history.episode_id},
                     history.slug
                 ):
-                    content, created = models.ContentHour.objects.get_or_create(
+                    content, _  = models.ContentHour.objects.get_or_create(
                         time=from_time, content_id=history.content_id, episode_id=history.episode_id,
-                        sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
+                        sid=history.sid, age_group=history.age_group, gender=history.gender
                     )
-                    
-                    if created:
-                        content.watched_users_count = 1
-
                     content.watched_duration += history.duration
                     content.save()
             elif history.broadcast_id:
-                if internal_models.Broadcast.objects.get( # TODO exists_or_create for broadcast
-                    broadcast_id=history.broadcast_id
-                ):
-                    broadcast, created = models.BroadcastHour.objects.get_or_create(
+                if etc.is_broadcast_exists_or_create(history.broadcast_id):
+                    broadcast, _ = models.BroadcastHour.objects.get_or_create(
                         time=to_time, broadcast_id=history.broadcast_id,
-                        sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
+                        sid=history.sid, age_group=history.age_group, gender=history.gender
                     )
-                    
-                    if created:
-                        broadcast.watched_users_count = 1
-                    
                     broadcast.watched_duration += history.duration
                     broadcast.save()
         except Exception as e:
@@ -92,14 +82,10 @@ def daily_history_task():
             time__range=(from_time, to_time), content_id=content.content_id, episode_id=content.episode_id,
         )
         for history in histories:
-            daily_c, created = models.ContentDay.objects.get_or_create(
+            daily_c, _ = models.ContentDay.objects.get_or_create(
                 time=from_time, content_id=content.content_id, episode_id=content.episode_id,
-                sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
+                sid=history.sid, age_group=history.age_group, gender=history.gender
             )
-
-            if created:
-                daily_c.watched_users_count = 1
-
             daily_c.watched_duration += history.duration
             daily_c.save()
     
@@ -110,13 +96,10 @@ def daily_history_task():
             time__range=(from_time, to_time), broadcast_id=broadcast.broadcast_id
         )
         for history in histories:
-            daily_b, created = models.BroadcastDay.objects.get_or_create(
+            daily_b, _ = models.BroadcastDay.objects.get_or_create(
                 time=from_time, broadcast_id=broadcast.broadcast_id,
-                sid=history.sid, age_group=history.age_group, gender=history.gender, country=history.country, device=history.device
+                sid=history.sid, age_group=history.age_group, gender=history.gender
             )
-            if created:
-                daily_b.watched_users_count = 1
-
             daily_b.watched_duration += history.duration
             daily_b.save()
     # Daily ended
@@ -127,10 +110,9 @@ def daily_history_task():
     for content in daily_contents:
         monthly_c = models.ContentMonth.objects.create(
             time=from_time, content_id=content.content_id, episode_id=content.episode_id,
-            sid=content.sid, age_group=content.age_group, gender=content.gender, country=content.country, device=content.device
+            sid=content.sid, age_group=content.age_group, gender=content.gender
         )
-
-        monthly_c.watched_users_count += content.watched_users_count
+        monthly_c.watched_users_count += 1
         monthly_c.watched_duration += content.watched_duration
         monthly_c.save()
 
@@ -139,10 +121,9 @@ def daily_history_task():
     for broadcast in daily_broadcasts:
         monthly_b = models.BroadcastMonth.objects.create(
             time=from_time, broadcast_id=broadcast.broadcast_id,
-            sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender,  country=broadcast.country, device=broadcast.device
+            sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender
         )
-
-        monthly_b.watched_users_count += broadcast.watched_users_count
+        monthly_b.watched_users_count += 1
         monthly_b.watched_duration += broadcast.watched_duration
         monthly_b.save()
     # Monthly ended
@@ -292,13 +273,9 @@ def daily_content_update_task():
     for content in contents:
         data = data_extractor.get_data(data_extractor.CONTENT_DATA_URL, params={"id_slugs": content.slug}).get("results").get(content.slug)
         content_dict = content.__dict__
-        print("\n")
-        print("content dict: ", content_dict)
-        print("\n")
-        print("data: ", data)
         for key, value in data.items():
             if content_dict.get(key) != value:
-                if not(key=="category" or key == "sponsors" or key == "allowed_subscriptions"):
+                if not(key=="category_id" or key == "sponsors" or key == "allowed_subscriptions"):
                     setattr(content, key, value)
 
         content_sponsors = list(content.sponsors.all().values_list("pk", flat=True))
@@ -306,44 +283,122 @@ def daily_content_update_task():
         
         if content_dict.get("category_id") != data.get("category_id"):
             if data.get("category_id"):
-                if etc.is_category_valid(value):
-                    content.category_id = value
+                if validators.is_category_valid(data.get("category_id")):
+                    content.category_id = data.get("category_id")
             else:
                 content.category = None
 
         if content_subscriptions != data.get("allowed_subscriptions"):
             if data.get("allowed_subscriptions"):
-                content.allowed_subscriptions.set(etc.validate_subscriptions(data.get("allowed_subscriptions")))
+                content.allowed_subscriptions.set(validators.validate_subscriptions(data.get("allowed_subscriptions")))
             else:
                 content.allowed_subscriptions.set([])
 
         if content_sponsors != data.get("sponsors"):
             if data.get("sponsors"):
-                content.sponsors.set(etc.validate_sponsors(data.get("sponsors")))
+                content.sponsors.set(validators.validate_sponsors(data.get("sponsors")))
             else:
                 content.sponsors.set([])
-
         content.save()
 
 
+@shared_task(name="daily-broadcast-update-task")
+def daily_broadcast_update_task():
+    url = data_extractor.BROADCAST_DATA_URL
+    while True:
+        data = data_extractor.get_data(
+            url, {}
+        )
+        print("DATA", data)
+        results = data.get("results")
+        if results:
+            for broadcast in results:
+                try:
+                    existing = internal_models.Broadcast.objects.get(broadcast_id=broadcast["tv_id"])  
+                    existing_subscriptions = list(existing.allowed_subscriptions.all().values_list("pk", flat=True))
+                    title = broadcast.get("title")
+                    quality = broadcast.get("quality")
+                    category_id = broadcast.get("category")
+                    allowed_subscriptions = broadcast.get("allowed_subscriptions")
+                    
+                    if title:
+                        existing.title = title
+                    if quality:
+                        existing.quality = quality
+                    
+                    if existing.__dict__.get("category_id") != category_id:
+                        if category_id:
+                            if validators.is_broadcast_category_valid(category_id):
+                                existing.category_id = category_id
+                            else:
+                                existing.category = None
+                    
+                    if existing_subscriptions != allowed_subscriptions:
+                        if allowed_subscriptions:
+                            existing.allowed_subscriptions.set(validators.validate_subscriptions(allowed_subscriptions))
+                        else:
+                            existing.allowed_subscriptions.set([])
+                    
+                    existing.save()
+                except internal_models.Broadcast.DoesNotExist:
+                    instance = {"broadcast_id": broadcast["tv_id"], "title": broadcast["title"],}
+                    category_id = broadcast.get("category")
+                    allowed_subscriptions = broadcast.get("allowed_subscriptions")
+
+                    if category_id:
+                        if validators.is_broadcast_category_valid(category_id):
+                            instance["category_id"] = category_id
+
+                    existing = internal_models.Broadcast.objects.create(**instance)
+                    
+                    if allowed_subscriptions:
+                        existing.allowed_subscriptions.set(validators.validate_subscriptions(allowed_subscriptions))
+                        existing.save()
+
+        next_url = data.get("next")
+        if next_url:
+            url = next_url
+        else:
+            break
+#
+
+
+# Profile
+@shared_task(name="profile-update-task")
+def hourly_profile_task():
+    url = data_extractor.PROFILES_URL
+    while True:
+        data = data_extractor.get_data(
+            url, {}
+        )
+        print("DATA", data)
+        results = data.get("results")
+
+        break
+
+
 app.conf.beat_schedule = {
+    # Data Update
     "daily-relations-update-task": {
-        "task": "daily-relations-task",
-        "schedule": crontab(hour="1", minute="5"),
+        "task": "daily-relations-update-task",
+        "schedule": crontab(hour="0", minute="0"),
     },
-    "daily-content-update-task": { # 
+    "daily-content-update-task": {
         "task": "daily-content-update-task",
-        "schedule": crontab(hour="0", minute="20"),
+        "schedule": crontab(hour="0", minute="10"),
     },
-    # TODO daily-broadcast-update-task
+    "daily-broadcast-update-task": {
+        "task": "daily-broadcast-update-task",
+        "schedule": crontab(hour="0", minute="15"),
+    },
     #
     "daily-history-task": {
-        "task": "hourly-register-task",
-        "schedule": crontab(hour="0", minute="10"),
+        "task": "daily-history-task",
+        "schedule": crontab(hour="0", minute="20"),
     },
     "hourly-history-task": {
         "task": "hourly-history-task",
-        "schedule": crontab(hour="*", minute="0"),
+        "schedule": crontab(hour="*", minute="5"),
     },
     #
     "hourly-register-task": {
@@ -352,6 +407,6 @@ app.conf.beat_schedule = {
     },
     "hourly-subscription-task": {
         "task": "hourly-subscription-task",
-        "schedule": crontab(hour="*", minute="2"),
+        "schedule": crontab(hour="*", minute="1"),
     },
 }

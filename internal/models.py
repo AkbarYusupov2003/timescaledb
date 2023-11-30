@@ -20,17 +20,6 @@ class AllowedSubscription(models.Model):
         verbose_name_plural = "Разрешенные подписки"
 
 
-class AllowedPeriod(models.Model):
-    name = models.CharField(verbose_name="Название", max_length=32)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "Разрешенный период"
-        verbose_name_plural = "Разрешенные периоды"
-
-
 class Sponsor(models.Model):
     name = models.CharField(verbose_name="Название", max_length=255)
     is_chosen = models.BooleanField(verbose_name="Выбран", default=False)
@@ -123,14 +112,20 @@ class Content(models.Model):
 
 
 class Broadcast(models.Model):
+    QUALITIES = (
+        ("sd", "SD"),
+        ("hd", "HD"),
+        ("fhd", "FULL HD")
+    )
+    
+    broadcast_id = models.PositiveBigIntegerField(
+        verbose_name="ID Телеканала", unique=True
+    )
     title = models.CharField(
         verbose_name="Название", max_length=255, null=True, blank=True
     )
     quality = models.CharField(
-        verbose_name="Качество", max_length=255, null=True, blank=True
-    )
-    broadcast_id = models.PositiveBigIntegerField(
-        verbose_name="ID Телеканала", unique=True
+        verbose_name="Качество", choices=QUALITIES, null=True, blank=True
     )
     category = models.ForeignKey(
         BroadcastCategory, verbose_name="Категории", on_delete=models.CASCADE, null=True, blank=True
@@ -145,3 +140,4 @@ class Broadcast(models.Model):
     class Meta:
         verbose_name = "Телеканал"
         verbose_name_plural = "Телеканалы"
+        ordering = ("-broadcast_id",)

@@ -1,43 +1,60 @@
-from statistic.utils import data_extractor
+from statistic.utils import data_extractor, validators
 from internal import models
 
 
-def is_category_valid(pk):
+def is_content_exists_or_create(data, slug):
     try:
-        models.Category.objects.get(pk=pk)
+        models.Content.objects.get(**data)
         return True
-    except:
-        return False
-
-
-def validate_subscriptions(pks):
-    existing_pks = list(models.AllowedSubscription.objects.filter(pk__in=pks).values_list("pk", flat=True))
-    return set(existing_pks).intersection(pks)
-
-
-def validate_sponsors(pks):
-    existing_pks = list(models.Sponsor.objects.filter(pk__in=pks).values_list("pk", flat=True))
-    return set(existing_pks).intersection(pks)
-
-
-def exists_or_create(data, slug): # TODO
-    instance = models.Content.objects.filter(**data).first()
-    if instance:
-        return True
-    else:
+    except models.Content.DoesNotExist:
         response = data_extractor.get_data(
             data_extractor.CONTENT_DATA_URL,
             params={"id_slugs": slug}
         )
-        results = response.get("results").get(slug)
-        if results:
-            results["content_id"] = data.get("content_id")
-            results["episode_id"] = data.get("episode_id")
-            results["slug"] = slug
-            results["category"] = models.Category.objects.get(pk=results.pop("category_id")) # validate category
-            models.Content.objects.create(**results)
+        result = response.get("results").get(slug)
+        if result:
+            result["content_id"] = data.get("content_id")
+            result["episode_id"] = data.get("episode_id")
+            result["slug"] = slug
+            allowed_subscriptions = result.pop("allowed_subscriptions", [])
+            sponsors = result.pop("sponsors", [])
+            if validators.is_category_valid(result.get("category_id")):
+                result["category_id"] = result.get("category_id")
+            else:
+                result["category_id"] = None
+            content = models.Content.objects.create(**result)
+            if allowed_subscriptions:
+                content.allowed_subscriptions.set(validators.validate_subscriptions(allowed_subscriptions))    
+            if sponsors:
+                content.sponsors.set(validators.validate_sponsors(sponsors))
+            content.save()
             return True
         else:
             return False
 
 
+def is_broadcast_exists_or_create(broadcast_id):
+    try:
+        models.Broadcast.objects.get(broadcast_id=broadcast_id)
+        return True
+    except models.Broadcast.DoesNotExist:
+        response = data_extractor.get_data(
+            data_extractor.BROADCAST_DETAIL_URL.format(broadcast_id),
+            params={"id_slugs": broadcast_id}
+        )
+        tv_id = response.get("tv_id")
+        title = response.get("title")
+        quality = response.get("quality")
+        category_id = response.get("category")
+        allowed_subscriptions = response.get("allowed_subscriptions")
+        if tv_id and title:
+            data = {"broadcast_id": tv_id, "title": title, "quality": quality}
+            if validators.is_broadcast_category_valid(category_id):
+                data["category_id"] = category_id
+            broadcast = models.Broadcast.objects.create(**data)
+            if allowed_subscriptions:
+                broadcast.allowed_subscriptions.set(validators.validate_subscriptions(allowed_subscriptions))            
+                broadcast.save()
+            return True
+        else:
+            return False

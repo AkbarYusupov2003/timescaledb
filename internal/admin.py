@@ -8,10 +8,6 @@ class AllowedSubscriptionAdmin(admin.ModelAdmin):
     list_display = ("pk", "title_ru")
 
 
-@admin.register(models.AllowedPeriod)
-class AllowedPeriodAdmin(admin.ModelAdmin):
-    list_display = ("name", )
-
 
 @admin.register(models.Sponsor)
 class SponsorAdmin(admin.ModelAdmin):
@@ -36,4 +32,4 @@ class ContentAdmin(admin.ModelAdmin):
 
 @admin.register(models.Broadcast)
 class BroadcastAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title", "broadcast_id")
+    list_display = ("broadcast_id", "title",)
