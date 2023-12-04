@@ -327,7 +327,7 @@ class Report(models.Model):
         finished = "FINISHED", "Завершен"
 
     section = models.CharField(verbose_name="Раздел", choices=SectionChoices.choices)
-    status = models.CharField(verbose_name="Статус", choices=StatusChoices.choices, default="PENDING")
+    status = models.CharField(verbose_name="Статус", choices=StatusChoices.choices, default="GENERATING")
     additional_data = models.JSONField(verbose_name="Дополнительные данные", default=dict, blank=True, null=True)
     file = models.FileField(verbose_name="Файл", upload_to="reports/%Y/%m/%d", null=True, blank=True)
     progress = models.PositiveSmallIntegerField(verbose_name="Прогресс генерации", default=0)

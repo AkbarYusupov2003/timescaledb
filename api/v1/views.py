@@ -643,9 +643,25 @@ class CategoryViewStatAPIView(APIView):
         cursor.execute(query)
         stat = cursor.fetchall()
         all_time = children_count = men_count = women_count = 0
+        
+        # Нужно
+        # "results": [
+            
+            # {"time": "2023-12-02T05:00:00", "men": 15, "women": 19, "children":33}
+        #     {
+        #         "time": "2023-12-02T05:00:00",
+        #         "watched_users": 45,
+        #         "gender": "children"
+        #     },
+        #     {
+        #         "time": "2023-12-02T05:00:00",
+        #         "watched_users": 55,
+        #         "gender": "men"
+        #     }
+        # ]
         for s in stat:
             time, watched_users, age_group, gender, category_id = s
-            exists = validate_res = False
+            exists = update_res = False
             if age_group in utils.CHILDREN_AGE_GROUPS:
                 calculated_gender = "children"
                 children_count += watched_users
@@ -655,17 +671,25 @@ class CategoryViewStatAPIView(APIView):
             else:
                 calculated_gender = "women"
                 women_count += watched_users
+
             if category == str(category_id):
-                validate_res = True
+                update_res = True
             elif not category:
-                validate_res = True
-            if validate_res:
+                update_res = True
+                
+            
+            if update_res:
                 for val in res:
                     if val.get("time") == time and val.get("gender") == calculated_gender:
                         val["watched_users"] += watched_users
                         exists = True
                 if not exists:
-                    res.append({"time": s[0], "watched_users": s[1], "gender": calculated_gender})
+                    res.append({"time": time, "men": 0, "women": 0, "children": 0})
+                    # TODO
+                    # res.append({"time": s[0], "watched_users": s[1], "gender": calculated_gender})
+                    
+                    
+            
             if not(category_id in categories_dict.keys()):
                 categories_dict[category_id] = {"men": 0, "women": 0, "children": 0}
             categories_dict[category_id][calculated_gender] += watched_users
@@ -677,9 +701,39 @@ class CategoryViewStatAPIView(APIView):
             
         if report_param == "True":
             if res:
-                pass
+                validate_filters = {"category": category, "age_group": age_group}
+                additional_data = {"period": period, "from_date": str(from_date), "to_date": str(to_date)}
+                for key, value in validate_filters.items():
+                    if value:
+                        additional_data[key] = value
+                
+                instance = models.Report.objects.create(
+                    section=models.Report.SectionChoices.category_views,
+                    status=models.Report.StatusChoices.generating,
+                    additional_data=additional_data
+                )
+                report.generate_category_views_report.delay(instance.pk, res)
+                
             else:
                 return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
+
+        # if report_param == "True":
+        #     if res:
+        #         validate_filters = {"category": category, "ordering": ordering}
+        #         additional_data = {"count": len(res), "period": period, "from_date": str(from_date), "to_date": str(to_date)}
+        #         for key, value in validate_filters.items():
+        #             if value:
+        #                 additional_data[key] = value
+
+        #         instance = models.Report.objects.create(
+        #             section=models.Report.SectionChoices.broadcast, status=models.Report.StatusChoices.generating, additional_data=additional_data
+        #         )
+        #         report.generate_broadcast_report.delay(instance.pk, res, str(from_date), str(to_date))
+        #         return Response({"message": "The task for report created"}, status=201)
+        #     else:
+        #         return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
+
+
 
         return Response(
             {"all-time": all_time, "children": children_count, "men": men_count, "women": women_count, "categories": categories_dict, "results": res},

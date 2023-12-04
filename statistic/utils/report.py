@@ -68,6 +68,7 @@ def generate_broadcast_report(pk, data, from_date, to_date):
         models.Report.objects.filter(pk=pk).update(status=models.Report.StatusChoices.failed)
 
 
+#------------------------------------------------------------------------------------------------------------
 @shared_task
 def generate_register_report(pk, data, period):
     try:
@@ -108,6 +109,37 @@ def generate_subscription_report(pk, data, period, sub_id):
                 if count % step == 0:
                     report.progress = count // step
                     report.save()
+        file_path = get_file_path()
+        with open(file_path, "wb") as f:
+            f.write(table.export("xlsx"))
+        report.file = file_path.replace("media/", "")
+        report.progress = 100
+        report.status = models.Report.StatusChoices.finished
+        report.save()
+    except:
+        models.Report.objects.filter(pk=pk).update(status=models.Report.StatusChoices.failed)
+
+
+#------------------------------------------------------------------------------------------------------------
+@shared_task
+def generate_category_views_report(pk, data, from_date, to_date):
+    try:
+        report = models.Report.objects.get(pk=pk)
+        table = tablib.Dataset(headers=("С", "До", "ID Категории", "Пол", "Количество просмотров"))
+        # table = tablib.Dataset(headers=("С", "До", "ID Телеканала", "Название", "Категория", "Количество просмотров", "Время просмотров", "Язык"))
+        step = len(data) // 10
+        # for count, val in enumerate(data):
+        #     category = val.get("category").get("name_ru") if val.get("category") else "Отсутствует"
+        #     table.append(
+        #         row=(
+        #             from_date, to_date, val["broadcast_id"], val["title"], category, 
+        #             val["watched_users"], val["watched_duration"], "Неизвестен"
+        #         )
+        #     )
+        #     if step != 0:
+        #         if count % step == 0:
+        #             report.progress = count // step
+        #             report.save()
         file_path = get_file_path()
         with open(file_path, "wb") as f:
             f.write(table.export("xlsx"))
