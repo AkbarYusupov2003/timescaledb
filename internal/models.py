@@ -29,7 +29,7 @@ class Sponsor(models.Model):
 
     class Meta:
         verbose_name = "Спонсор"
-        verbose_name_plural = "Спонсоры"
+        verbose_name_plural = "5. Спонсоры"
 
 
 class Category(models.Model):
@@ -49,7 +49,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name = "Категория"
-        verbose_name_plural = "Категории"
+        verbose_name_plural = "3. Категории"
         ordering = ("ordering",)
 
 
@@ -69,7 +69,7 @@ class BroadcastCategory(models.Model):
 
     class Meta:
         verbose_name = "Категория телеканалов"
-        verbose_name_plural = "Категории телеканалов"
+        verbose_name_plural = "4. Категории телеканалов"
 
 
 class Content(models.Model):
@@ -107,7 +107,7 @@ class Content(models.Model):
 
     class Meta:
         verbose_name = "Контент"
-        verbose_name_plural = "Контенты"
+        verbose_name_plural = "1. Контенты"
         unique_together = ("content_id", "episode_id")
 
 
@@ -139,5 +139,5 @@ class Broadcast(models.Model):
 
     class Meta:
         verbose_name = "Телеканал"
-        verbose_name_plural = "Телеканалы"
+        verbose_name_plural = "2. Телеканалы"
         ordering = ("-broadcast_id",)

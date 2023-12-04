@@ -547,17 +547,17 @@ class BroadcastStatDetailAPIView(APIView):
             cursor.execute(query)
             stat = cursor.fetchall()
             broadcast = self.serializer_class(broadcast).data
-            data = []
+            res = []
             total_watched_users = 0
             for s in stat:
                 exists = False
-                for val in data:
+                for val in res:
                     if val.get("time") == s[0]:
                         val["watched_users"] +=  s[1]
                         val["watched_duration"] +=  s[2]
                         exists = True
                 if not exists:
-                    data.append({"time": s[0], "watched_users": s[1], "watched_duration": s[2]})
+                    res.append({"time": s[0], "watched_users": s[1], "watched_duration": s[2]})
                 total_watched_users += s[1]
         else:
             broadcast_id = f"(broadcast_id = '{broadcast.broadcast_id}')"
@@ -568,20 +568,20 @@ class BroadcastStatDetailAPIView(APIView):
             cursor.execute(query)
             stat = cursor.fetchall()
             broadcast = self.serializer_class(broadcast).data
-            data = []
+            res = []
             total_watched_users = 0
             for s in stat:
                 exists = False
-                for val in data:
+                for val in res:
                     if val.get("time") == s[0]:
                         val["watched_users"] +=  1
                         val["watched_duration"] +=  s[1]
                         exists = True
                 if not exists:
-                    data.append({"time": s[0], "watched_users": 1, "watched_duration": s[1]})
+                    res.append({"time": s[0], "watched_users": 1, "watched_duration": s[1]})
                 total_watched_users += 1
 
-        broadcast["data"] = data
+        broadcast["results"] = res
         broadcast["total"] = total_watched_users
         
         query = f"""SELECT COUNT(*)
@@ -589,12 +589,102 @@ class BroadcastStatDetailAPIView(APIView):
                     WHERE {broadcast_id}"""
         cursor.execute(query)
         all_time = cursor.fetchone()
-        if all_time:
-            broadcast["all-time"] = all_time[0]
-        else:
-            broadcast["all-time"] = 0
+        broadcast["all-time"] = all_time[0] if all_time[0] else 0
 
         return Response(broadcast, status=200)
+
+
+# Category View
+class CategoryViewStatAPIView(APIView):
+    
+    def get(self, request, *args, **kwargs):
+        from_date = request.GET.get("from_date")
+        to_date = request.GET.get("to_date")
+        period = request.GET.get("period")
+        category = request.GET.get("category", "")
+        age_group = request.GET.get("age_group")
+        report_param = request.GET.get("report")
+
+        raw_filter = []
+        if (category) and (not category.isnumeric()):
+            return Response({"error": "category validation"}, status=400)
+
+        if age_group:
+            for age in age_group.rstrip(",").split(","):
+                if raw_filter:
+                    raw_filter.append(f"OR age_group = '{age}'")
+                else:
+                    raw_filter.append(f"AND (age_group = '{age}'")
+            raw_filter.append(")")
+        print("raw_filter", raw_filter)
+        try:
+            date_format = "%Y-%m-%d-%Hh"
+            from_date = datetime.datetime.strptime(from_date, date_format)
+            to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
+            if period == "hours":
+                table_name = "statistic_category_view_hour"
+            elif period == "day":
+                table_name = "statistic_category_view_day"
+            elif period == "month":
+                table_name = "statistic_category_view_month"
+            else:
+                return Response({"error": "period validation"}, status=400)
+        except:
+            return Response({"error": "date validation"}, status=400)
+
+        cursor = connection.cursor()
+        res = []
+        categories_dict = {}
+        raw_filter = " ".join(raw_filter) if raw_filter else ""
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), age_group, gender, category_id
+                    FROM {table_name}
+                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
+                    GROUP BY interval, watched_users_count, age_group, gender, category_id"""
+        cursor.execute(query)
+        stat = cursor.fetchall()
+        all_time = children_count = men_count = women_count = 0
+        for s in stat:
+            time, watched_users, age_group, gender, category_id = s
+            exists = validate_res = False
+            if age_group in utils.CHILDREN_AGE_GROUPS:
+                calculated_gender = "children"
+                children_count += watched_users
+            elif gender == "M":
+                calculated_gender = "men"
+                men_count += watched_users
+            else:
+                calculated_gender = "women"
+                women_count += watched_users
+            if category == str(category_id):
+                validate_res = True
+            elif not category:
+                validate_res = True
+            if validate_res:
+                for val in res:
+                    if val.get("time") == time and val.get("gender") == calculated_gender:
+                        val["watched_users"] += watched_users
+                        exists = True
+                if not exists:
+                    res.append({"time": s[0], "watched_users": s[1], "gender": calculated_gender})
+            if not(category_id in categories_dict.keys()):
+                categories_dict[category_id] = {"men": 0, "women": 0, "children": 0}
+            categories_dict[category_id][calculated_gender] += watched_users
+
+        query = f"""SELECT SUM(watched_users_count) FROM statistic_category_view_day"""
+        cursor.execute(query)
+        val = cursor.fetchone()
+        all_time = val[0] if val[0] else 0
+            
+        if report_param == "True":
+            if res:
+                pass
+            else:
+                return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
+
+        return Response(
+            {"all-time": all_time, "children": children_count, "men": men_count, "women": women_count, "categories": categories_dict, "results": res},
+            status=200
+        )
 
 
 # Report
@@ -620,126 +710,6 @@ class ReportDownloadedAPIView(APIView):
         report.is_downloaded = True
         report.save()
         return Response({"message": "The value of report.is_downloaded field is set to True"}, status=200)
-
-
-# TODO
-class CategoryViewStatAPIView(APIView):
-    
-    def get(self, request, *args, **kwargs):
-        from_date = request.GET.get("from_date")
-        to_date = request.GET.get("to_date")
-        period = request.GET.get("period")
-        category = request.GET.get("category", "")
-        age_group = request.GET.get("age_group") # TODO GET LIST OF AGE_GROUPS WITH "," delimiter
-        report_param = request.GET.get("report")
-        # TODO age_group - 6-25
-        qs_filter = {}
-        raw_filter = []
-        if category.isnumeric():
-            qs_filter["category_id"] = category
-
-        if age_group in models.AGE_GROUPS_LIST:
-            raw_filter.append(f"AND (age_group = '{age_group}')")
-
-        try:
-            date_format = "%Y-%m-%d-%Hh"
-            from_date = datetime.datetime.strptime(from_date, date_format)
-            to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
-            if period == "hours":
-                table_name = "statistic_category_view_hour"
-            elif period == "day":
-                table_name = "statistic_category_view_day"
-            elif period == "month":
-                table_name = "statistic_category_view_month"
-            else:
-                return Response({"error": "period validation"}, status=400)
-        except:
-            return Response({"error": "date validation"}, status=400)
-
-        
-        cursor = connection.cursor()
-        # query 1: time, gender, watched_users_count
-        # query 2: category1: men: 1, women: 1, children: 1,     
-        #          category2: men: 1, women: 1, children: 1  
-        res = []
-        categories_dict = {}
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), age_group, gender, category_id
-                    FROM {table_name}
-                    WHERE (time BETWEEN '{from_date}' AND '{to_date}')
-                    GROUP BY interval, watched_users_count, age_group, gender, category_id"""
-        cursor.execute(query)
-        stat = cursor.fetchall()
-        print("stat", stat)
-        children_count = men_count = women_count = 0
-        
-        if category:
-            for s in stat:
-                time, watched_users, age_group, gender, category_id = s
-                if age_group in utils.CHILDREN_AGE_GROUPS:
-                    calculated_gender = "children"
-                    women_count += watched_users
-                elif gender == "M":
-                    calculated_gender = "men"
-                    men_count += watched_users
-                else:
-                    calculated_gender = "women"
-                    children_count += watched_users
-
-                if category == str(category_id):
-                    # CALCULATE 1 CATEGORY
-                    exists = False
-                    for val in res:
-                        if val.get("time") == time and val.get("gender") == calculated_gender:
-                            val["watched_users"] += watched_users
-                            exists = True
-                    if not exists:
-                        res.append({"time": s[0], "watched_users": s[1], "gender": calculated_gender})
-                else:
-                    # CALCULATE EVERY CATEGORY
-                    print("abc")
-                    
-                print("iter", categories_dict.keys())
-                if not(category_id in categories_dict.keys()):
-                    categories_dict[category_id] = {"men": 0, "women": 0, "children": 0} 
-                categories_dict[category_id][calculated_gender] += watched_users
-
-        if report_param == "True":
-            if res:
-                pass
-            else:
-                return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
-
-        return Response(
-            {"total": 0, "children": children_count, "men": men_count, "women": women_count, "categories": categories_dict, "results": res},
-            status=200
-        )
-
-        # gender_counter = f"""SUM(watched_users_count) FILTER (WHERE gender = 'M') AS men,
-        #                      SUM(watched_users_count) FILTER (WHERE gender = 'W') AS women"""
-        # query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), {gender_counter}, age_group
-        #             FROM {table_name}
-        #             WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND {content_id} {episode_id}
-        #             GROUP BY interval, watched_users_count, age_group"""
-        # cursor.execute(query)
-        # stat =  cursor.fetchall()
-        # content = self.serializer_class(content).data        
-        # for s in stat:
-        #     exists = False
-        #     for val in data:
-        #         if val.get("time") == s[0]:
-        #             val["watched_users"] +=  s[1]
-        #             exists = True
-        #     if not exists:
-        #         data.append({"time": s[0], "watched_users": s[1],})
-        #     age_group = s[4]
-        #     if age_group in children.keys():
-        #         children[age_group] += s[1]
-        #     else:
-        #         if s[2]:
-        #             men[age_group] += s[2]
-        #         if s[3]:
-        #             women[age_group] += s[3]
-        #     total_watched_users += s[1]
 
 
 # Register
@@ -888,8 +858,3 @@ class SubscriptionTotalStatAPIView(APIView):
 
 
 # ------------------------------------------------
-class ProfileHourView(APIView):
-
-    def get(self, request, *args, **kwargs):
-        print("GET")
-        return Response({"worked": True}, status=200)

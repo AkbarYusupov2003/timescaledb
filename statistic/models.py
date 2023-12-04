@@ -335,5 +335,5 @@ class Report(models.Model):
 
     class Meta:
         verbose_name = "Отчет"
-        verbose_name_plural = "13. Отчеты"
+        verbose_name_plural = "Отчеты"
         ordering = ("-created_at",)
