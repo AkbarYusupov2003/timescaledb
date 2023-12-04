@@ -741,6 +741,7 @@ class CategoryViewStatAPIView(APIView):
         #             women[age_group] += s[3]
         #     total_watched_users += s[1]
 
+
 # Register
 class RegisterStatAPIView(APIView):
     serializer_class = serializers.RegisterSerializer
