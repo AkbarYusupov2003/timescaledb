@@ -8,8 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import LimitOffsetPagination
 
-from api import serializers
-from api import utils
+from api.v1 import serializers
+from api.v1 import utils
 from statistic.utils import report
 from statistic import models
 from internal import models as internal_models

@@ -318,6 +318,7 @@ class Report(models.Model):
         register = "REGISTER", "Регистрации"
         subscriptions = "SUBSCRIPTIONS", "Подписки"
         visits = "VISITS", "Посещения с девайсов"
+        category_views = "CATEGORY_VIEWS", "Просмотры категорий"
         ads = "ADS", "Реклама"
 
     class StatusChoices(models.TextChoices):

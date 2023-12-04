@@ -1,9 +1,9 @@
 from django.urls import path
 
-from api import views
+from api.v1 import views
 
 
-app_name = "api"
+app_name = "api.v1"
 
 urlpatterns = [
     # Internal
@@ -12,11 +12,11 @@ urlpatterns = [
     path("internal/category-list/", views.CategoryListAPIView.as_view()),
     path("internal/broadcast-category-list/", views.BroadcastCategoryListAPIView.as_view()),
     # Internal ended
-    path("create-history/", views.CreateHistoryAPIView.as_view()), # TODO
+    path("create-history/", views.CreateHistoryAPIView.as_view()),
     #
     path("content-stat/", views.ContentStatAPIView.as_view()),
     path("content-stat/<slug:slug>/", views.ContentStatDetailAPIView.as_view()),
-    path("broadcast-stat/", views.BroadcastStatAPIView.as_view()), # TODO
+    path("broadcast-stat/", views.BroadcastStatAPIView.as_view()),
     path("broadcast-stat/<int:pk>/", views.BroadcastStatDetailAPIView.as_view()),
     #
     path("category-views/", views.CategoryViewStatAPIView.as_view()),

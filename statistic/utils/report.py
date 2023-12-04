@@ -3,7 +3,7 @@ from datetime import datetime
 import tablib
 from celery import shared_task
 
-from api import utils
+from api.v1 import utils
 from internal import models as internal_models
 from statistic import models
 

@@ -12,7 +12,7 @@ from config.yasg import urlpatterns as yasg_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", include("api.urls", namespace="api")),
+    path("", include("api.v1.urls", namespace="api.v1")),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
 ]

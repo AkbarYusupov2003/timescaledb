@@ -23,7 +23,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "corsheaders",
     # my apps
-    "api",
+    "api.v1",
     "internal",
     "statistic",
 ]
