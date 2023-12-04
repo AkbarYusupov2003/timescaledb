@@ -122,24 +122,22 @@ def generate_subscription_report(pk, data, period, sub_id):
 
 #------------------------------------------------------------------------------------------------------------
 @shared_task
-def generate_category_views_report(pk, data, from_date, to_date):
+def generate_category_views_report(pk, data, category, age_group, period):
     try:
         report = models.Report.objects.get(pk=pk)
-        table = tablib.Dataset(headers=("С", "До", "ID Категории", "Пол", "Количество просмотров"))
-        # table = tablib.Dataset(headers=("С", "До", "ID Телеканала", "Название", "Категория", "Количество просмотров", "Время просмотров", "Язык"))
+        table = tablib.Dataset(headers=("Фильтр по категории", "Фильтр по возрастным группам", "Период", "Время", "Просмотры детей", "Просмотры женщин", "Просмотры мужчин",))
         step = len(data) // 10
-        # for count, val in enumerate(data):
-        #     category = val.get("category").get("name_ru") if val.get("category") else "Отсутствует"
-        #     table.append(
-        #         row=(
-        #             from_date, to_date, val["broadcast_id"], val["title"], category, 
-        #             val["watched_users"], val["watched_duration"], "Неизвестен"
-        #         )
-        #     )
-        #     if step != 0:
-        #         if count % step == 0:
-        #             report.progress = count // step
-        #             report.save()
+        for count, val in enumerate(data):
+            # category_id = val.get("category_id") if val.get("category_id") else "Нет"
+            table.append(
+                row=(
+                    category, age_group, period, str(val["time"]), val["children"], val["women"], val["men"]
+                )
+            )
+            if step != 0:
+                if count % step == 0:
+                    report.progress = count // step
+                    report.save()
         file_path = get_file_path()
         with open(file_path, "wb") as f:
             f.write(table.export("xlsx"))
@@ -150,6 +148,8 @@ def generate_category_views_report(pk, data, from_date, to_date):
     except:
         models.Report.objects.filter(pk=pk).update(status=models.Report.StatusChoices.failed)
 
+
+#------------------------------------------------------------------------------------------------------------
 
 def get_file_path():
     time = datetime.now()

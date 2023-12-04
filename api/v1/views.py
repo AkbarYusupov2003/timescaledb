@@ -602,21 +602,21 @@ class CategoryViewStatAPIView(APIView):
         to_date = request.GET.get("to_date")
         period = request.GET.get("period")
         category = request.GET.get("category", "")
-        age_group = request.GET.get("age_group")
+        age_group = request.GET.get("age_group", "").rstrip(",").split(",")
         report_param = request.GET.get("report")
 
         raw_filter = []
         if (category) and (not category.isnumeric()):
             return Response({"error": "category validation"}, status=400)
 
-        if age_group:
-            for age in age_group.rstrip(",").split(","):
+        if age_group[0]:
+            for age in age_group:
                 if raw_filter:
                     raw_filter.append(f"OR age_group = '{age}'")
                 else:
                     raw_filter.append(f"AND (age_group = '{age}'")
             raw_filter.append(")")
-        print("raw_filter", raw_filter)
+        
         try:
             date_format = "%Y-%m-%d-%Hh"
             from_date = datetime.datetime.strptime(from_date, date_format)
@@ -640,59 +640,39 @@ class CategoryViewStatAPIView(APIView):
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, watched_users_count, age_group, gender, category_id"""
+        print("raw_filter", raw_filter)
+        print("QUERY", query)
         cursor.execute(query)
         stat = cursor.fetchall()
         all_time = children_count = men_count = women_count = 0
-        
-        # Нужно
-        # "results": [
-            
-            # {"time": "2023-12-02T05:00:00", "men": 15, "women": 19, "children":33}
-        #     {
-        #         "time": "2023-12-02T05:00:00",
-        #         "watched_users": 45,
-        #         "gender": "children"
-        #     },
-        #     {
-        #         "time": "2023-12-02T05:00:00",
-        #         "watched_users": 55,
-        #         "gender": "men"
-        #     }
-        # ]
+
         for s in stat:
             time, watched_users, age_group, gender, category_id = s
             exists = update_res = False
             if age_group in utils.CHILDREN_AGE_GROUPS:
-                calculated_gender = "children"
+                calc_gender = "children"
                 children_count += watched_users
             elif gender == "M":
-                calculated_gender = "men"
+                calc_gender = "men"
                 men_count += watched_users
             else:
-                calculated_gender = "women"
+                calc_gender = "women"
                 women_count += watched_users
-
             if category == str(category_id):
                 update_res = True
             elif not category:
                 update_res = True
-                
-            
             if update_res:
                 for val in res:
-                    if val.get("time") == time and val.get("gender") == calculated_gender:
-                        val["watched_users"] += watched_users
+                    if val.get("time") == time:
+                        val[calc_gender] += watched_users
                         exists = True
                 if not exists:
                     res.append({"time": time, "men": 0, "women": 0, "children": 0})
-                    # TODO
-                    # res.append({"time": s[0], "watched_users": s[1], "gender": calculated_gender})
-                    
-                    
-            
+                    res[-1][calc_gender] += watched_users
             if not(category_id in categories_dict.keys()):
                 categories_dict[category_id] = {"men": 0, "women": 0, "children": 0}
-            categories_dict[category_id][calculated_gender] += watched_users
+            categories_dict[category_id][calc_gender] += watched_users
 
         query = f"""SELECT SUM(watched_users_count) FROM statistic_category_view_day"""
         cursor.execute(query)
@@ -706,35 +686,32 @@ class CategoryViewStatAPIView(APIView):
                 for key, value in validate_filters.items():
                     if value:
                         additional_data[key] = value
-                
                 instance = models.Report.objects.create(
                     section=models.Report.SectionChoices.category_views,
                     status=models.Report.StatusChoices.generating,
                     additional_data=additional_data
                 )
-                report.generate_category_views_report.delay(instance.pk, res)
+
+                if category:
+                    category = models.Category.objects.get(pk=category).name_ru
+
+                readable_age = ""
+                if age_group:
+                    for age in age_group:
+                        readable_age.append(utils.AGE_GROUP_DICT[age])
                 
+                report.generate_category_views_report.delay(instance.pk, res, category, ", ".join(readable_age), period)
+                return Response({"message": "The task for report created"}, status=201)
             else:
                 return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
-
-        # if report_param == "True":
-        #     if res:
-        #         validate_filters = {"category": category, "ordering": ordering}
-        #         additional_data = {"count": len(res), "period": period, "from_date": str(from_date), "to_date": str(to_date)}
-        #         for key, value in validate_filters.items():
-        #             if value:
-        #                 additional_data[key] = value
-
-        #         instance = models.Report.objects.create(
-        #             section=models.Report.SectionChoices.broadcast, status=models.Report.StatusChoices.generating, additional_data=additional_data
-        #         )
-        #         report.generate_broadcast_report.delay(instance.pk, res, str(from_date), str(to_date))
-        #         return Response({"message": "The task for report created"}, status=201)
-        #     else:
-        #         return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
-
-
-
+        
+        # try:
+        #     for key in list(categories_dict.keys()):
+        #         cat_name = models.Category.objects.get(pk=key).name_ru
+        #         categories_dict[cat_name] = categories_dict.pop(key)
+        # except:
+        #     pass
+        
         return Response(
             {"all-time": all_time, "children": children_count, "men": men_count, "women": women_count, "categories": categories_dict, "results": res},
             status=200

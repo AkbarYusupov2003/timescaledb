@@ -198,7 +198,7 @@ class BroadcastMonth(TimescaleModel):
 
 # --------------------------------------------------------------------
 class CategoryViewHour(TimescaleModel):
-    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
+    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории", null=True, blank=True)
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
@@ -317,9 +317,9 @@ class Report(models.Model):
         broadcast = "BROADCAST", "Телеканалы"
         register = "REGISTER", "Регистрации"
         subscriptions = "SUBSCRIPTIONS", "Подписки"
-        visits = "VISITS", "Посещения с девайсов"
+        visits = "VISITS", "Посещения с девайсов" # TODO
         category_views = "CATEGORY_VIEWS", "Просмотры категорий"
-        ads = "ADS", "Реклама"
+        ads = "ADS", "Реклама" # TODO
 
     class StatusChoices(models.TextChoices):
         generating = "GENERATING", "Генерируется"
