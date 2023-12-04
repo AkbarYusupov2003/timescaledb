@@ -1,4 +1,6 @@
 import datetime
+from django.db import connection
+from django.db.models import Sum, Count
 from celery import shared_task
 from celery.schedules import crontab
 
@@ -160,9 +162,23 @@ def daily_history_task():
         )
         view_category.watched_users_count += 1
         view_category.save()
+        
     # Monthly ended
+    
+    # select * from the_table where the_timestamp_column::date = date '2015-07-15
+    cursor = connection.cursor()
+    print("Qwertty", from_time.date(), type(from_time.date()))
+    query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(watched_users_count), age_group, gender
+                FROM statistic_broadcast_month
+                WHERE (time = '{from_time}')
+                GROUP BY interval, watched_users_count, age_group, gender"""
+    cursor.execute(query)
+    stat = cursor.fetchall()
+    print("STAT", stat)
+    # WHERE time BETWEEN '{from_time}' AND '{from_time}'
 
-
+    # WHERE (time = {from_time.date()})
+    
 # Data Update
 @shared_task(name="daily-relations-update-task")
 def daily_relations_update_task():

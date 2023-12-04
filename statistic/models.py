@@ -198,7 +198,7 @@ class BroadcastMonth(TimescaleModel):
 
 # --------------------------------------------------------------------
 class CategoryViewHour(TimescaleModel):
-    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории", null=True, blank=True)
+    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
@@ -211,7 +211,7 @@ class CategoryViewHour(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за час"
-        verbose_name_plural = "10. Просмотры категорий за час"
+        verbose_name_plural = "11. Просмотры категорий за час"
         db_table = "statistic_category_view_hour"
         ordering = ("-time",)
 
@@ -230,7 +230,7 @@ class CategoryViewDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за день"
-        verbose_name_plural = "11. Просмотры категорий за день"
+        verbose_name_plural = "12. Просмотры категорий за день"
         db_table = "statistic_category_view_day"
         ordering = ("-time",)
 
@@ -249,7 +249,7 @@ class CategoryViewMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за месяц"
-        verbose_name_plural = "12. Просмотры категорий за месяц"
+        verbose_name_plural = "13. Просмотры категорий за месяц"
         db_table = "statistic_category_view_month"
         ordering = ("-time",)
 
@@ -280,7 +280,7 @@ class History(models.Model):
     duration = models.PositiveIntegerField(
         verbose_name="Длительность", default=10
     )
-    time = TimescaleDateTimeField(verbose_name="Создано", interval="2 days")
+    time = TimescaleDateTimeField(verbose_name="Создано", interval="1 month")
     objects = TimescaleManager()
 
     class Meta:
@@ -338,3 +338,40 @@ class Report(models.Model):
         verbose_name = "Отчет"
         verbose_name_plural = "Отчеты"
         ordering = ("-created_at",)
+
+# ---------------------------------------------------------------------
+class DailyTotalView(TimescaleModel):
+    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
+    age_group = models.CharField(
+        verbose_name="Возрастная группа", choices=AGE_GROUPS
+    )
+    gender = models.CharField(
+        verbose_name="Пол", choices=GENDERS
+    )
+    total_views = models.PositiveIntegerField(
+        verbose_name="Количество просмотров", default=0
+    )
+    
+    class Meta:
+        verbose_name = "Общий просмотр за день"
+        verbose_name_plural = "10. Общие просмотры за день"
+        ordering = ("-time",)
+
+# TODO TOP 5 по Категориям ( выбирает категория -> получает топ 5 ), TOP 5 Фильмов или Эпизодов
+# ????
+
+# class DailyContentTotalView(TimescaleModel):
+#     content_id = models.PositiveIntegerField(
+#         verbose_name="ID Контента", blank=True, null=True
+#     )
+#     broadcast_id = models.PositiveIntegerField(
+#         verbose_name="ID Телеканала", blank=True, null=True
+#     )
+#     category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
+#     watched_users_count = models.PositiveIntegerField(
+#         verbose_name="Количество просмотров", default=0
+#     )
+
+#     class Meta:
+#         verbose_name = ""
+#         verbose_name_plural = ""

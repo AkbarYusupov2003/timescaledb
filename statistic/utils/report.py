@@ -125,13 +125,15 @@ def generate_subscription_report(pk, data, period, sub_id):
 def generate_category_views_report(pk, data, category, age_group, period):
     try:
         report = models.Report.objects.get(pk=pk)
-        table = tablib.Dataset(headers=("Фильтр по категории", "Фильтр по возрастным группам", "Период", "Время", "Просмотры детей", "Просмотры женщин", "Просмотры мужчин",))
+        table = tablib.Dataset(
+            headers=("Фильтр по категории", "Фильтр по возрастным группам", "Период", "Время", "Просмотры детей", "Просмотры женщин", "Просмотры мужчин")
+        )
+        translated_period = utils.TRANSLATE_ALLOWED_PERIODS[period]
         step = len(data) // 10
         for count, val in enumerate(data):
-            # category_id = val.get("category_id") if val.get("category_id") else "Нет"
             table.append(
                 row=(
-                    category, age_group, period, str(val["time"]), val["children"], val["women"], val["men"]
+                    category, age_group, translated_period, str(val["time"]), val["children"], val["women"], val["men"]
                 )
             )
             if step != 0:

@@ -66,13 +66,6 @@ class ViewCategoryMonth(admin.ModelAdmin):
     list_filter = ("category_id", )
 
 # -------------------------------------------------------------------------------------------------
-@admin.register(models.Report)
-class ReportAdmin(admin.ModelAdmin):
-    list_display = ("section",  "status", "created_at")
-    list_filter = ("created_at",)
-
-
-# -------------------------------------------------------------------------------------------------
 @admin.register(models.Register)
 class RegisterAdmin(admin.ModelAdmin):
     list_display = ("pk", "count", "time")
@@ -83,3 +76,16 @@ class RegisterAdmin(admin.ModelAdmin):
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = ("pk", "sub_id", "count", "time")
     list_filter = ("time",)
+
+
+@admin.register(models.Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ("section",  "status", "created_at")
+    list_filter = ("created_at",)
+# -------------------------------------------------------------------------------------------------
+
+
+@admin.register(models.DailyTotalView)
+class DailyTotalViewAdmin(admin.ModelAdmin):
+    list_display = ("category_id", "age_group", "gender", "total_views")
+    list_filter = ("category_id",)

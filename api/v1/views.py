@@ -636,7 +636,7 @@ class CategoryViewStatAPIView(APIView):
         res = []
         categories_dict = {}
         raw_filter = " ".join(raw_filter) if raw_filter else ""
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), age_group, gender, category_id
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, age_group, gender, category_id
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, watched_users_count, age_group, gender, category_id"""
@@ -647,9 +647,9 @@ class CategoryViewStatAPIView(APIView):
         all_time = children_count = men_count = women_count = 0
 
         for s in stat:
-            time, watched_users, age_group, gender, category_id = s
+            time, watched_users, raw_age_group, gender, category_id = s
             exists = update_res = False
-            if age_group in utils.CHILDREN_AGE_GROUPS:
+            if raw_age_group in utils.CHILDREN_AGE_GROUPS:
                 calc_gender = "children"
                 children_count += watched_users
             elif gender == "M":
@@ -678,33 +678,28 @@ class CategoryViewStatAPIView(APIView):
         cursor.execute(query)
         val = cursor.fetchone()
         all_time = val[0] if val[0] else 0
-            
+
         if report_param == "True":
             if res:
-                validate_filters = {"category": category, "age_group": age_group}
                 additional_data = {"period": period, "from_date": str(from_date), "to_date": str(to_date)}
-                for key, value in validate_filters.items():
-                    if value:
-                        additional_data[key] = value
+                if category:
+                    category = models.Category.objects.get(pk=category).name_ru
+                    additional_data["category"] = category
+                readable_age = []
+                if age_group[0]:
+                    for age in age_group:
+                        readable_age.append(utils.AGE_GROUP_DICT[age])
+                    additional_data["age_group"] = age_group
                 instance = models.Report.objects.create(
                     section=models.Report.SectionChoices.category_views,
                     status=models.Report.StatusChoices.generating,
                     additional_data=additional_data
                 )
-
-                if category:
-                    category = models.Category.objects.get(pk=category).name_ru
-
-                readable_age = ""
-                if age_group:
-                    for age in age_group:
-                        readable_age.append(utils.AGE_GROUP_DICT[age])
-                
                 report.generate_category_views_report.delay(instance.pk, res, category, ", ".join(readable_age), period)
                 return Response({"message": "The task for report created"}, status=201)
             else:
                 return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
-        
+
         # try:
         #     for key in list(categories_dict.keys()):
         #         cat_name = models.Category.objects.get(pk=key).name_ru
@@ -889,3 +884,106 @@ class SubscriptionTotalStatAPIView(APIView):
 
 
 # ------------------------------------------------
+class MostViewedContentAPIView(APIView):
+        
+    def get(self, request, *args, **kwargs):
+        from_date = request.GET.get("from_date")
+        to_date = request.GET.get("to_date")
+        period = request.GET.get("period")
+        category = request.GET.get("category", "")
+        age_group = request.GET.get("age_group", "").rstrip(",").split(",")
+        gender = request.GET.get("gender")
+
+        raw_filter = []
+        
+        # FILTERS: category, age_group, gender:  Return Total views for last month -> {time1: count1, time2: count2, }
+        # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on category(if category entered)
+        # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on content_id, episode_id
+        
+        if category.isnumeric():
+            # TODO TEST
+            raw_filter.append(f"AND (category_id = {category})")
+
+        if age_group[0]:
+            for age in age_group:
+                if raw_filter:
+                    raw_filter.append(f"OR age_group = '{age}'")
+                else:
+                    raw_filter.append(f"AND (age_group = '{age}'")
+            raw_filter.append(")")
+
+        try:
+            date_format = "%Y-%m-%d-%Hh"
+            from_date = datetime.datetime.strptime(from_date, date_format)
+            to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
+            if period == "hours":
+                table_name = "statistic_category_view_hour"
+            elif period == "day":
+                table_name = "statistic_category_view_day"
+            elif period == "month":
+                table_name = "statistic_category_view_month"
+            else:
+                return Response({"error": "period validation"}, status=400)
+        except:
+            return Response({"error": "date validation"}, status=400)
+        
+        cursor = connection.cursor()
+
+
+        return Response({"worked": True}, status=200)
+# {
+#   "last_month_views": [{"day": "", "views": 1}, ...29 more], 
+#   "top_by_month_with_category_filter": [{"title": "", "views": 1, "created_at", "category", "image"}, ...4more]
+#   "top_by_month_without_category_filter": [{"title": "", "views": 1, "created_at", "category", "image"}, ...4more]
+# }
+            
+# class CategoryViewStatAPIView(APIView):
+    
+#     def get(self, request, *args, **kwargs):
+#         from_date = request.GET.get("from_date")
+#         to_date = request.GET.get("to_date")
+#         period = request.GET.get("period")
+#         category = request.GET.get("category", "")
+#         age_group = request.GET.get("age_group", "").rstrip(",").split(",")
+#         report_param = request.GET.get("report")
+
+#         raw_filter = []
+#         if (category) and (not category.isnumeric()):
+#             return Response({"error": "category validation"}, status=400)
+
+#         if age_group[0]:
+#             for age in age_group:
+#                 if raw_filter:
+#                     raw_filter.append(f"OR age_group = '{age}'")
+#                 else:
+#                     raw_filter.append(f"AND (age_group = '{age}'")
+#             raw_filter.append(")")
+        
+#         try:
+#             date_format = "%Y-%m-%d-%Hh"
+#             from_date = datetime.datetime.strptime(from_date, date_format)
+#             to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
+#             if period == "hours":
+#                 table_name = "statistic_category_view_hour"
+#             elif period == "day":
+#                 table_name = "statistic_category_view_day"
+#             elif period == "month":
+#                 table_name = "statistic_category_view_month"
+#             else:
+#                 return Response({"error": "period validation"}, status=400)
+#         except:
+#             return Response({"error": "date validation"}, status=400)
+
+#         cursor = connection.cursor()
+#         res = []
+#         categories_dict = {}
+#         raw_filter = " ".join(raw_filter) if raw_filter else ""
+#         query = f"""SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, age_group, gender, category_id
+#                     FROM {table_name}
+#                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
+#                     GROUP BY interval, watched_users_count, age_group, gender, category_id"""
+#         print("raw_filter", raw_filter)
+#         print("QUERY", query)
+#         cursor.execute(query)
+#         stat = cursor.fetchall()
+#         all_time = children_count = men_count = women_count = 0
