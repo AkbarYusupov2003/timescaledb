@@ -889,7 +889,6 @@ class MostViewedContentAPIView(APIView):
     def get(self, request, *args, **kwargs):
         from_date = request.GET.get("from_date")
         to_date = request.GET.get("to_date")
-        period = request.GET.get("period")
         category = request.GET.get("category", "")
         age_group = request.GET.get("age_group", "").rstrip(",").split(",")
         gender = request.GET.get("gender")
@@ -908,17 +907,9 @@ class MostViewedContentAPIView(APIView):
             raw_filter.append(")")
 
         try:
-            date_format = "%Y-%m-%d-%Hh"
+            date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
-            if period == "hours":
-                table_name = "statistic_category_view_hour"
-            elif period == "day":
-                table_name = "statistic_category_view_day"
-            elif period == "month":
-                table_name = "statistic_category_view_month"
-            else:
-                return Response({"error": "period validation"}, status=400)
         except:
             return Response({"error": "date validation"}, status=400)
 

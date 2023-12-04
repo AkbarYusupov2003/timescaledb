@@ -32,5 +32,4 @@ urlpatterns = [
     path("report/<int:pk>/downloaded/", views.ReportDownloadedAPIView.as_view()),
     #
     path("most-viewed-content/", views.MostViewedContentAPIView.as_view()),
-    
 ]

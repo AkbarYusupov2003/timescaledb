@@ -166,16 +166,27 @@ def daily_history_task():
     # Monthly ended
     
     cursor = connection.cursor()
-    query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(watched_users_count), age_group, gender
-                FROM statistic_broadcast_month
+    query = f"""SELECT time_bucket('1 day', time) AS interval, content_id, SUM(watched_users_count), age_group, gender
+                FROM statistic_content_month
                 WHERE (time = '{from_time}')
-                GROUP BY interval, watched_users_count, age_group, gender"""
+                GROUP BY interval, content_id, watched_users_count, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
     print("STAT", stat)
-    # TODO
-
     
+    for s in stat:
+        # TODO
+        time, content_id, watched_users_count, age_group, gender = s
+        exists, category_id = etc.is_content_exists_or_create({"content_id": content_id}, str(content_id))
+        
+        if exists:
+            total, _ = models.DailyTotalView.objects.get_or_create(
+                time=time, category_id=category_id, age_group=age_group, gender=gender
+            )
+            total.total_views += watched_users_count
+            total.save()
+
+
 # Data Update
 @shared_task(name="daily-relations-update-task")
 def daily_relations_update_task():
@@ -428,6 +439,10 @@ app.conf.beat_schedule = {
     "daily-broadcast-update-task": {
         "task": "daily-broadcast-update-task",
         "schedule": crontab(hour="0", minute="15"),
+    },
+    "daily-total-views-task": {
+        "task": "daily-total-views-task",
+        "schedule": crontab(hour="0", minute="30"),
     },
     #
     "daily-history-task": {

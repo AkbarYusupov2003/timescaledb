@@ -361,18 +361,20 @@ class DailyTotalView(TimescaleModel):
 # TODO TOP 5 по Категориям ( выбирает категория -> получает топ 5 ), TOP 5 Фильмов или Эпизодов
 # ????
 
-# class DailyContentTotalView(TimescaleModel):
-#     content_id = models.PositiveIntegerField(
-#         verbose_name="ID Контента", blank=True, null=True
-#     )
-#     broadcast_id = models.PositiveIntegerField(
-#         verbose_name="ID Телеканала", blank=True, null=True
-#     )
-#     category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
-#     watched_users_count = models.PositiveIntegerField(
-#         verbose_name="Количество просмотров", default=0
-#     )
+class DailyContentTotalView(TimescaleModel):
+    content_id = models.PositiveIntegerField(
+        verbose_name="ID Контента", blank=True, null=True
+    )
+    broadcast_id = models.PositiveIntegerField(
+        verbose_name="ID Телеканала", blank=True, null=True
+    )
+    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
+    watched_users_count = models.PositiveIntegerField(
+        verbose_name="Количество просмотров", default=0
+    )
 
-#     class Meta:
-#         verbose_name = ""
-#         verbose_name_plural = ""
+    class Meta:
+        verbose_name = ""
+        verbose_name_plural = ""
+        db_table = "statistic_daily_content_total_view"
+        ordering = ("-time",)
