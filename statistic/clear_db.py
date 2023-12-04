@@ -5,7 +5,7 @@ clear = [
     # models.History,
     models.ContentHour, models.ContentDay, models.ContentMonth,
     models.BroadcastHour, models.BroadcastDay, models.BroadcastMonth,
-    models.ViewCategoryHour,
+    models.CategoryViewHour, models.CategoryViewDay, models.CategoryViewMonth,
     models.Register, models.Subscription,
     models.Report
 ]

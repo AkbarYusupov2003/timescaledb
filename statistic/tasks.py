@@ -165,9 +165,7 @@ def daily_history_task():
         
     # Monthly ended
     
-    # select * from the_table where the_timestamp_column::date = date '2015-07-15
     cursor = connection.cursor()
-    print("Qwertty", from_time.date(), type(from_time.date()))
     query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(watched_users_count), age_group, gender
                 FROM statistic_broadcast_month
                 WHERE (time = '{from_time}')
@@ -175,9 +173,8 @@ def daily_history_task():
     cursor.execute(query)
     stat = cursor.fetchall()
     print("STAT", stat)
-    # WHERE time BETWEEN '{from_time}' AND '{from_time}'
+    # TODO
 
-    # WHERE (time = {from_time.date()})
     
 # Data Update
 @shared_task(name="daily-relations-update-task")
