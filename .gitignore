@@ -1,10 +1,9 @@
 .idea/
+django_timescaledb.zip
 
 # Created by https://www.gitignore.io/api/macos,linux,django,python,pycharm
 
 ### Django ###
-stripe.exe
-/geoip
 *.log
 *.pot
 *.pyc
@@ -12,7 +11,7 @@ __pycache__/
 local_settings.py
 db.sqlite3
 media
-django_timescaledb.zip
+
 
 ### Linux ###
 *~
