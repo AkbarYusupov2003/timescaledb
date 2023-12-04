@@ -10,12 +10,6 @@ except:
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = 'django-insecure-%6ft#6s_w+_b$lh#c!9ec56h8o#!)!*dyyc08e!-1192sq9g%h' #
-
-DEBUG = True #
-
-ALLOWED_HOSTS = ["*"] #
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,7 +44,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,3 +114,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=60),
     "ROTATE_REFRESH_TOKENS": True
 }
+
+# TODO
+# CORS_ALLOWED_ORIGINS = ["https://domain.com",]
+# CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://\w+\.domain\.com$",]

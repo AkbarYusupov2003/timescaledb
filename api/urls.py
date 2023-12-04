@@ -19,11 +19,15 @@ urlpatterns = [
     path("broadcast-stat/", views.BroadcastStatAPIView.as_view()), # TODO
     path("broadcast-stat/<int:pk>/", views.BroadcastStatDetailAPIView.as_view()),
     #
+    path("category-views/", views.CategoryViewStatAPIView.as_view()),
+    #
     path("register-stat/", views.RegisterStatAPIView.as_view()),
     path("register-stat/total/", views.RegisterTotalStatAPIView.as_view()),
     #
-    path("subscriptions-stat/", views.SubscriptionStatAPIView.as_view()),
-    path("subscriptions-stat/total/", views.SubscriptionTotalStatAPIView.as_view()),
+    path("subscription-stat/", views.SubscriptionStatAPIView.as_view()),
+    path("subscription-stat/total/", views.SubscriptionTotalStatAPIView.as_view()),
     #
-    path("report/create/", views.ReportCreateView.as_view()),
+    path("report/performing/", views.PerformingReportAPIView.as_view()),
+    path("report/performed/", views.PerformedReportAPIView.as_view()),
+    path("report/<int:pk>/downloaded/", views.ReportDownloadedAPIView.as_view()),
 ]

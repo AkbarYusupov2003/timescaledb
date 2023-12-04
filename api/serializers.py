@@ -1,34 +1,35 @@
 from rest_framework import serializers
 
-from internal import models
+from internal import models as internal_models
+from statistic import models
 
 
 # Internal
 class SponsorSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.Sponsor
+        model = internal_models.Sponsor
         fields = ("id", "name")
 
 
 class AllowedSubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.AllowedSubscription
+        model = internal_models.AllowedSubscription
         fields = ("id", "title_ru")
 
 
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.Category
+        model = internal_models.Category
         fields = ("id", "name_ru")
 
 
 class BroadcastCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.BroadcastCategory
+        model = internal_models.BroadcastCategory
         fields = ("id", "name_ru")
 # Internal ended
 
@@ -39,7 +40,7 @@ class ContentSerializer(serializers.ModelSerializer):
     allowed_subscriptions = AllowedSubscriptionSerializer(many=True)
 
     class Meta:
-        model = models.Content
+        model = internal_models.Content
         fields = (
             "title_ru", "content_id", "episode_id", "is_russian", "category", 
             "sponsors", "allowed_subscriptions", "duration", "slug", "year"
@@ -50,8 +51,23 @@ class BroadcastSerializer(serializers.ModelSerializer):
     category = BroadcastCategorySerializer()
     
     class Meta:
-        model = models.Broadcast
+        model = internal_models.Broadcast
         fields = ("broadcast_id", "title", "quality", "category")
+
+
+# ------------------------------------------------------------------------------------
+class PerformingReportSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Report
+        fields = ("id", "section", "progress")
+
+
+class PerformedReportSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Report
+        fields = ("id", "section", "file", "additional_data", "is_downloaded", "created_at")
 
 
 # ------------------------------------------------------------------------------------

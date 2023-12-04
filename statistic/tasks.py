@@ -1,5 +1,4 @@
 import datetime
-from django.db.models import F, Value, CharField
 from celery import shared_task
 from celery.schedules import crontab
 
@@ -13,8 +12,8 @@ from statistic.utils import data_extractor, etc, validators
 @shared_task(name='hourly-register-task')
 def hourly_register_task():
     period = "hours"
+    time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
     data = data_extractor.get_data(data_extractor.SIGNUP_URL, params={'period': period})
-    time = datetime.datetime.now() - datetime.timedelta(hours=1)
     if type(data) == dict:
         models.Register.objects.create(count=data.get("count", 0), time=time)
 
@@ -23,8 +22,8 @@ def hourly_register_task():
 @shared_task(name='hourly-subscription-task')
 def hourly_subscription_task():
     period = "hours"
+    time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
     data = data_extractor.get_data(data_extractor.TRANSACTION_URL, params={'period': period})
-    time = datetime.datetime.now() - datetime.timedelta(hours=1)
     if type(data) == dict:
         for key, value in data.items():
             models.Subscription.objects.create(sub_id=key, count=value, time=time)
@@ -40,42 +39,51 @@ def hourly_history_task():
         time__range=(from_time, to_time),
     )
     print("Histories", histories, from_time, to_time)
-    # Hourly
     for history in histories:
         try:
+            # Content
             if history.content_id:
-                if etc.is_content_exists_or_create(
+                exists, category_id = etc.is_content_exists_or_create(
                     {"content_id": history.content_id, "episode_id": history.episode_id},
                     history.slug
-                ):
+                )
+                if exists:
                     content, _  = models.ContentHour.objects.get_or_create(
                         time=from_time, content_id=history.content_id, episode_id=history.episode_id,
                         sid=history.sid, age_group=history.age_group, gender=history.gender
                     )
                     content.watched_duration += history.duration
                     content.save()
+            # Broadcast
             elif history.broadcast_id:
                 if etc.is_broadcast_exists_or_create(history.broadcast_id):
                     broadcast, _ = models.BroadcastHour.objects.get_or_create(
-                        time=to_time, broadcast_id=history.broadcast_id,
+                        time=from_time, broadcast_id=history.broadcast_id,
                         sid=history.sid, age_group=history.age_group, gender=history.gender
                     )
                     broadcast.watched_duration += history.duration
                     broadcast.save()
+                    category_id = 5
+            # View Category
+            if category_id:
+                view_category, _ = models.CategoryViewHour.objects.get_or_create(
+                    time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+                )
+                view_category.watched_users_count += 1
+                view_category.save()
+
         except Exception as e:
             print("Exception", e)
-    # Hourly ended
 
 
 @shared_task(name="daily-history-task")
 def daily_history_task():
-    to_time = datetime.date.today()
-    from_time = to_time - datetime.timedelta(days=1) # Yesterday
-    # from_time = datetime.date.today() # Yesterday
-    # to_time = from_time + datetime.timedelta(days=1)
-    
+    # to_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
+    # from_time = to_time - datetime.timedelta(days=1) # Yesterday
+    from_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0) # Yesterday
+    to_time = from_time + datetime.timedelta(days=1)
+    print("FROM TIME", from_time)
     # DAILY
-    # Content
     contents = internal_models.Content.objects.all()
     for content in contents:
         histories = models.History.objects.filter(
@@ -88,8 +96,15 @@ def daily_history_task():
             )
             daily_c.watched_duration += history.duration
             daily_c.save()
-    
-    # Broadcast
+            category_id = etc.category_by_content_id(daily_c.content_id)
+            # View Category
+            if category_id:
+                view_category, _ = models.CategoryViewDay.objects.get_or_create(
+                    time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+                )
+                view_category.watched_users_count += 1
+                view_category.save()
+            
     broadcasts = internal_models.Broadcast.objects.all()
     for broadcast in broadcasts:
         histories = models.History.objects.filter(
@@ -102,10 +117,15 @@ def daily_history_task():
             )
             daily_b.watched_duration += history.duration
             daily_b.save()
+            # View Category
+            view_category, _ = models.CategoryViewDay.objects.get_or_create(
+                time=from_time, category_id=5, age_group=history.age_group, gender=history.gender
+            )
+            view_category.watched_users_count += 1
+            view_category.save()
     # Daily ended
 
     # MONTHLY
-    # Content
     daily_contents = models.ContentDay.objects.filter(time=from_time)
     for content in daily_contents:
         monthly_c = models.ContentMonth.objects.create(
@@ -115,10 +135,18 @@ def daily_history_task():
         monthly_c.watched_users_count += 1
         monthly_c.watched_duration += content.watched_duration
         monthly_c.save()
+        category_id = etc.category_by_content_id(monthly_c.content_id)
+        # View Category
+        if category_id:
+            view_category, _ = models.CategoryViewMonth.objects.get_or_create(
+                time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+            )
+            view_category.watched_users_count += 1
+            view_category.save()
 
-    # Broadcast
     daily_broadcasts = models.BroadcastDay.objects.filter(time=from_time)
     for broadcast in daily_broadcasts:
+        
         monthly_b = models.BroadcastMonth.objects.create(
             time=from_time, broadcast_id=broadcast.broadcast_id,
             sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender
@@ -126,6 +154,12 @@ def daily_history_task():
         monthly_b.watched_users_count += 1
         monthly_b.watched_duration += broadcast.watched_duration
         monthly_b.save()
+        # View Category
+        view_category, _ = models.CategoryViewMonth.objects.get_or_create(
+            time=from_time, category_id=5, age_group=history.age_group, gender=history.gender
+        )
+        view_category.watched_users_count += 1
+        view_category.save()
     # Monthly ended
 
 
@@ -265,7 +299,10 @@ def daily_relations_update_task():
 
 
 @shared_task(name="daily-content-update-task")
-def daily_content_update_task():
+def daily_content_update_task(update_relations=False):
+    if update_relations:
+        daily_relations_update_task()
+
     contents = internal_models.Content.objects.all().select_related(
         "category"
     ).prefetch_related("sponsors", "allowed_subscriptions")
@@ -303,13 +340,15 @@ def daily_content_update_task():
 
 
 @shared_task(name="daily-broadcast-update-task")
-def daily_broadcast_update_task():
+def daily_broadcast_update_task(update_relations=False):
+    if update_relations:
+        daily_relations_update_task()
+
     url = data_extractor.BROADCAST_DATA_URL
     while True:
         data = data_extractor.get_data(
             url, {}
         )
-        print("DATA", data)
         results = data.get("results")
         if results:
             for broadcast in results:
@@ -320,12 +359,12 @@ def daily_broadcast_update_task():
                     quality = broadcast.get("quality")
                     category_id = broadcast.get("category")
                     allowed_subscriptions = broadcast.get("allowed_subscriptions")
-                    
+
                     if title:
                         existing.title = title
                     if quality:
                         existing.quality = quality
-                    
+
                     if existing.__dict__.get("category_id") != category_id:
                         if category_id:
                             if validators.is_broadcast_category_valid(category_id):
@@ -341,7 +380,7 @@ def daily_broadcast_update_task():
                     
                     existing.save()
                 except internal_models.Broadcast.DoesNotExist:
-                    instance = {"broadcast_id": broadcast["tv_id"], "title": broadcast["title"],}
+                    instance = {"broadcast_id": broadcast["tv_id"], "title": broadcast["title"], "quality": broadcast.get("quality")}
                     category_id = broadcast.get("category")
                     allowed_subscriptions = broadcast.get("allowed_subscriptions")
 
@@ -361,20 +400,6 @@ def daily_broadcast_update_task():
         else:
             break
 #
-
-
-# Profile
-@shared_task(name="profile-update-task")
-def hourly_profile_task():
-    url = data_extractor.PROFILES_URL
-    while True:
-        data = data_extractor.get_data(
-            url, {}
-        )
-        print("DATA", data)
-        results = data.get("results")
-
-        break
 
 
 app.conf.beat_schedule = {

@@ -2,10 +2,13 @@ from statistic.utils import data_extractor, validators
 from internal import models
 
 
-def is_content_exists_or_create(data, slug):
+def is_content_exists_or_create(data, slug) -> tuple:
     try:
-        models.Content.objects.get(**data)
-        return True
+        category = models.Content.objects.get(**data).category
+        pk = None
+        if category:
+            pk = category.pk
+        return (True, pk)
     except models.Content.DoesNotExist:
         response = data_extractor.get_data(
             data_extractor.CONTENT_DATA_URL,
@@ -28,12 +31,12 @@ def is_content_exists_or_create(data, slug):
             if sponsors:
                 content.sponsors.set(validators.validate_sponsors(sponsors))
             content.save()
-            return True
+            return (True, result["category_id"])
         else:
-            return False
+            return (False, None)
 
 
-def is_broadcast_exists_or_create(broadcast_id):
+def is_broadcast_exists_or_create(broadcast_id) -> bool:
     try:
         models.Broadcast.objects.get(broadcast_id=broadcast_id)
         return True
@@ -58,3 +61,11 @@ def is_broadcast_exists_or_create(broadcast_id):
             return True
         else:
             return False
+
+
+def category_by_content_id(content_id):
+    try:
+        content = models.Content.objects.get(content_id=content_id)
+        return content.category.pk
+    except:
+        return None
