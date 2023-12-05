@@ -930,7 +930,7 @@ class MostViewedContentAPIView(APIView):
             res.append({"time": s[0], "count": s[1]})
         
         query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
-                    FROM statistic_daily_content_view
+                    FROM statistic_daily_detail_view
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, total_views"""
         cursor.execute(query)

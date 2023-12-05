@@ -98,8 +98,8 @@ class DailyTotalViewAdmin(admin.ModelAdmin):
     list_filter = ("age_group", "gender")
 
 
-@admin.register(models.DailySeparatedView)
-class DailySeparatedViewAdmin(admin.ModelAdmin):
+@admin.register(models.DailyDetailView)
+class DailyDetailViewAdmin(admin.ModelAdmin):
     list_display = ("content_id", "broadcast_id", "episode_id", "category_id", "age_group", "gender", "total_views", "time")
     list_filter = ("category_id", "age_group", "gender")
 

@@ -349,7 +349,7 @@ class DailyTotalView(TimescaleModel):
 
 # TODO TOP 5 по Категориям ( выбирает категория -> получает топ 5 ), TOP 5 Фильмов или Эпизодов
 # ????
-class DailySeparatedView(TimescaleModel):
+class DailyDetailView(TimescaleModel):
     content_id = models.PositiveIntegerField(
         verbose_name="ID Контента", blank=True, null=True
     )
@@ -372,9 +372,9 @@ class DailySeparatedView(TimescaleModel):
     )
 
     class Meta:
-        verbose_name = "Отдельные просмотры контента"
-        verbose_name_plural = "13. Отдельные просмотры контентов"
-        db_table = "statistic_daily_separated_view"
+        verbose_name = "Детальные просмотры"
+        verbose_name_plural = "13. Детальные просмотры"
+        db_table = "statistic_daily_detail_view"
         ordering = ("-time",)
 
 
