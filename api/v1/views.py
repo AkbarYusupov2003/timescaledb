@@ -903,6 +903,9 @@ class MostViewedContentAPIView(APIView):
                     raw_filter.append(f"AND (age_group = '{age}'")
             raw_filter.append(")")
 
+        if gender in models.GENDERS_LIST:
+            raw_filter.append(f"AND (gender = '{gender}')")
+
         try:
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
@@ -918,27 +921,24 @@ class MostViewedContentAPIView(APIView):
         query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
                     FROM statistic_daily_total_view
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
+                    GROUP BY interval"""
+        cursor.execute(query)
+        stat = cursor.fetchall()
+        print("STAT1", stat)
+        res = []
+        for s in stat:
+            res.append({"time": s[0], "count": s[1]})
+        
+        query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
+                    FROM statistic_daily_content_view
+                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, total_views"""
         cursor.execute(query)
         stat = cursor.fetchall()
-        print("STAT", stat)
-        res = []
+        print("STAT2", stat)
         for s in stat:
             print(s)
-            time, total_views = s
-            exists = False
-            # for val in res:
-            #     if val.get("time") == time:
-            #         val[calc_gender] += watched_users
-            #         exists = True
-            # if not exists:
-            #     res.append({"time": time, "men": 0, "women": 0, "children": 0})
-            #     res[-1][calc_gender] += watched_users
-            
-            
-            
-            
-            
+        
         # for s in stat:
         #     time, watched_users, raw_age_group, gender, category_id = s
         #     exists = update_res = False
@@ -967,4 +967,7 @@ class MostViewedContentAPIView(APIView):
         #         categories_dict[category_id] = {"men": 0, "women": 0, "children": 0}
         #     categories_dict[category_id][calc_gender] += watched_users   
         
-        return Response({"worked": True}, status=200)
+        return Response(
+            {"last_views": res, "most_viewed": "", "most_viewed_by_categories": ""},
+            status=200
+        )

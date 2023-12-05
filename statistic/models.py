@@ -2,8 +2,6 @@ from django.db import models
 from timescale.db.models.fields import TimescaleDateTimeField
 from timescale.db.models.managers import TimescaleManager
 
-from internal.models import Category, Broadcast
-
 
 AGE_GROUPS = (
     ("0", "0-6"),
@@ -360,13 +358,17 @@ class DailyTotalView(TimescaleModel):
 
 # TODO TOP 5 по Категориям ( выбирает категория -> получает топ 5 ), TOP 5 Фильмов или Эпизодов
 # ????
-class DailyContentTotalView(TimescaleModel):
+class DailySeparatedView(TimescaleModel):
     content_id = models.PositiveIntegerField(
         verbose_name="ID Контента", blank=True, null=True
     )
     broadcast_id = models.PositiveIntegerField(
         verbose_name="ID Телеканала", blank=True, null=True
     )
+    episode_id = models.PositiveIntegerField(
+        verbose_name="ID Эпизода", blank=True, null=True
+    )
+    #
     category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
@@ -381,5 +383,5 @@ class DailyContentTotalView(TimescaleModel):
     class Meta:
         verbose_name = "Просмотры контента"
         verbose_name_plural = "14. Просмотры контентов"
-        db_table = "statistic_daily_content_total_view"
+        db_table = "statistic_daily_separated_view"
         ordering = ("-time",)
