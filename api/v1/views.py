@@ -10,7 +10,7 @@ from rest_framework.pagination import LimitOffsetPagination
 
 from api.v1 import serializers
 from api.v1 import utils
-from statistic.utils import report
+from statistic.utils import report, data_extractor
 from statistic import models
 from internal import models as internal_models
 
@@ -886,14 +886,13 @@ class MostViewedContentAPIView(APIView):
     def get(self, request, *args, **kwargs):
         from_date = request.GET.get("from_date")
         to_date = request.GET.get("to_date")
-        category = request.GET.get("category", "")
+        category = request.GET.get("category", "1")
         age_group = request.GET.get("age_group", "").rstrip(",").split(",")
         gender = request.GET.get("gender")
 
         raw_filter = []
-        if category.isnumeric():
-            # TODO TEST
-            raw_filter.append(f"AND (category_id = {category})")
+        # if category.isnumeric():
+        #     raw_filter.append(f"AND (category_id = {category})")
 
         if age_group[0]:
             for age in age_group:
@@ -913,31 +912,50 @@ class MostViewedContentAPIView(APIView):
         except:
             return Response({"error": "date validation"}, status=400)
 
-        # FILTERS: category, age_group, gender:  Return Total views for last month -> {time1: count1, time2: count2, }
-        # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on category(if category entered)
-        # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on content_id, episode_id
         cursor = connection.cursor()
         raw_filter = " ".join(raw_filter) if raw_filter else ""
+        
+        # LAST MONTH VIEWS
+        now = datetime.datetime.today()
+        month_ago = now - datetime.timedelta(days=30)
+        
         query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
                     FROM statistic_daily_total_view
-                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
+                    WHERE (time BETWEEN '{month_ago}' AND '{now}') {raw_filter}
                     GROUP BY interval"""
         cursor.execute(query)
         stat = cursor.fetchall()
         print("STAT1", stat)
-        res = []
+        last_views = []
         for s in stat:
-            res.append({"time": s[0], "count": s[1]})
+            last_views.append({"time": s[0], "count": s[1]})
         
-        query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
+        # MOST VIEWED
+        query = f"""SELECT content_id, episode_id, SUM(total_views)
                     FROM statistic_daily_detail_view
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
-                    GROUP BY interval, total_views"""
+                    GROUP BY content_id, episode_id"""
+        print("query", query)
         cursor.execute(query)
         stat = cursor.fetchall()
         print("STAT2", stat)
+        most_viewed = []
         for s in stat:
+            content_id, episode_id, total_views = s
+            exists = False
+            for val in most_viewed:
+                if val.get("content_id") == content_id and val.get("episode_id") == episode_id:
+                        val["total_views"] += total_views
+                        exists = True
+            if not exists:
+                most_viewed.append({"content_id": content_id, "episode_id": episode_id, "category": category, "total_views": total_views})            
+            
             print(s)
+        
+
+
+        # TODO ADD data_extractor.get_data(data_extractor.CONTENT_DETAIL_PICTURE_URL.format("3555"), {})
+        
         
         # for s in stat:
         #     time, watched_users, raw_age_group, gender, category_id = s
@@ -968,6 +986,6 @@ class MostViewedContentAPIView(APIView):
         #     categories_dict[category_id][calc_gender] += watched_users   
         
         return Response(
-            {"last_views": res, "most_viewed": "", "most_viewed_by_categories": ""},
+            {"last_views": last_views, "most_viewed": "", "most_viewed_by_categories": ""},
             status=200
         )

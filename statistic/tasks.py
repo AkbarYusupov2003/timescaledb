@@ -175,13 +175,19 @@ def daily_history_task():
     print("STAT", stat)
     
     for s in stat:
-        # TODO
+        # TODO add data to DailyDetailView also
         time, content_id, watched_users_count, age_group, gender = s
         exists, category_id = etc.is_content_exists_or_create({"content_id": content_id}, str(content_id))
 
         if exists:
+            detail, _ = models.DailyDetailView.objects.get_or_create(
+                time=from_time, category_id=category_id, age_group=age_group, gender=gender
+            )
+            detail.total_views += watched_users_count
+            detail.save()
+            
             total, _ = models.DailyTotalView.objects.get_or_create(
-                time=time, category_id=category_id, age_group=age_group, gender=gender
+                time=time, age_group=age_group, gender=gender
             )
             total.total_views += watched_users_count
             total.save()

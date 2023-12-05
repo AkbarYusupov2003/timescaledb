@@ -353,9 +353,6 @@ class DailyDetailView(TimescaleModel):
     content_id = models.PositiveIntegerField(
         verbose_name="ID Контента", blank=True, null=True
     )
-    broadcast_id = models.PositiveIntegerField(
-        verbose_name="ID Телеканала", blank=True, null=True
-    )
     episode_id = models.PositiveIntegerField(
         verbose_name="ID Эпизода", blank=True, null=True
     )
