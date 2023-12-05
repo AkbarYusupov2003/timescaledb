@@ -1,8 +1,5 @@
 TEST View Category With Diff data inputs
 
-TODO TEST PROFILE(category-views)
-
-
 
 # ------------------------------------------
 TEST EVERY URL

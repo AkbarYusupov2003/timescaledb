@@ -17,8 +17,6 @@ AGE_GROUP_DICT = {
     "9": "55+",
 }
 
-
-
 CHILDREN_AGE_GROUPS = ("0", "1", "2")
 
 def get_group_by_age(age):

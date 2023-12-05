@@ -915,7 +915,7 @@ class MostViewedContentAPIView(APIView):
         # LAST MONTH VIEWS
         now = datetime.datetime.today()
         month_ago = now - datetime.timedelta(days=30)
-        query = f"""SELECT time_bucket('1 month', time) AS interval, SUM(total_views)
+        query = f"""SELECT time_bucket('30 days', time) AS interval, SUM(total_views)
                     FROM statistic_daily_total_views
                     WHERE (time BETWEEN '{month_ago}' AND '{now}') {raw_filter}
                     GROUP BY interval"""

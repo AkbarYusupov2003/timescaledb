@@ -11,6 +11,7 @@ urlpatterns = [
     path("internal/allowed-subscription-list/", views.AllowedSubscriptionListAPIView.as_view()),
     path("internal/category-list/", views.CategoryListAPIView.as_view()),
     path("internal/broadcast-category-list/", views.BroadcastCategoryListAPIView.as_view()),
+    # TODO _____________________________________________________________________________________
     # Internal ended
     path("create-history/", views.CreateHistoryAPIView.as_view()),
     #

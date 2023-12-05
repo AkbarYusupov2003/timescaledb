@@ -442,10 +442,10 @@ app.conf.beat_schedule = {
         "task": "daily-broadcast-update-task",
         "schedule": crontab(hour="0", minute="15"),
     },
-    "daily-total-views-task": {
-        "task": "daily-total-views-task",
-        "schedule": crontab(hour="0", minute="30"),
-    },
+    # "daily-total-views-task": {
+    #     "task": "daily-total-views-task",
+    #     "schedule": crontab(hour="0", minute="30"),
+    # },
     #
     "daily-history-task": {
         "task": "daily-history-task",
