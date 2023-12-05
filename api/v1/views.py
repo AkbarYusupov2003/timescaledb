@@ -915,13 +915,56 @@ class MostViewedContentAPIView(APIView):
         # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on content_id, episode_id
         cursor = connection.cursor()
         raw_filter = " ".join(raw_filter) if raw_filter else ""
-        query = f"""SELECT time_bucket('1 day', time) AS interval, content_id, SUM(watched_users_count), age_group, gender
-                    FROM statistic_daily_content_total_view
+        query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
+                    FROM statistic_daily_total_view
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
-                    GROUP BY interval, content_id, watched_users_count, age_group, gender"""
+                    GROUP BY interval, total_views"""
         cursor.execute(query)
         stat = cursor.fetchall()
         print("STAT", stat)
-        
+        res = []
+        for s in stat:
+            print(s)
+            time, total_views = s
+            exists = False
+            # for val in res:
+            #     if val.get("time") == time:
+            #         val[calc_gender] += watched_users
+            #         exists = True
+            # if not exists:
+            #     res.append({"time": time, "men": 0, "women": 0, "children": 0})
+            #     res[-1][calc_gender] += watched_users
+            
+            
+            
+            
+            
+        # for s in stat:
+        #     time, watched_users, raw_age_group, gender, category_id = s
+        #     exists = update_res = False
+        #     if raw_age_group in utils.CHILDREN_AGE_GROUPS:
+        #         calc_gender = "children"
+        #         children_count += watched_users
+        #     elif gender == "M":
+        #         calc_gender = "men"
+        #         men_count += watched_users
+        #     else:
+        #         calc_gender = "women"
+        #         women_count += watched_users
+        #     if category == str(category_id):
+        #         update_res = True
+        #     elif not category:
+        #         update_res = True
+        #     if update_res:
+        #         for val in res:
+        #             if val.get("time") == time:
+        #                 val[calc_gender] += watched_users
+        #                 exists = True
+        #         if not exists:
+        #             res.append({"time": time, "men": 0, "women": 0, "children": 0})
+        #             res[-1][calc_gender] += watched_users
+        #     if not(category_id in categories_dict.keys()):
+        #         categories_dict[category_id] = {"men": 0, "women": 0, "children": 0}
+        #     categories_dict[category_id][calc_gender] += watched_users   
         
         return Response({"worked": True}, status=200)

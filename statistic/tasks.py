@@ -178,7 +178,7 @@ def daily_history_task():
         # TODO
         time, content_id, watched_users_count, age_group, gender = s
         exists, category_id = etc.is_content_exists_or_create({"content_id": content_id}, str(content_id))
-        
+
         if exists:
             total, _ = models.DailyTotalView.objects.get_or_create(
                 time=time, category_id=category_id, age_group=age_group, gender=gender

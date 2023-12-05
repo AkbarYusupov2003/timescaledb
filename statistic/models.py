@@ -341,7 +341,6 @@ class Report(models.Model):
 
 # ---------------------------------------------------------------------
 class DailyTotalView(TimescaleModel):
-    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
@@ -369,12 +368,18 @@ class DailyContentTotalView(TimescaleModel):
         verbose_name="ID Телеканала", blank=True, null=True
     )
     category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
-    watched_users_count = models.PositiveIntegerField(
+    age_group = models.CharField(
+        verbose_name="Возрастная группа", choices=AGE_GROUPS
+    )
+    gender = models.CharField(
+        verbose_name="Пол", choices=GENDERS
+    )
+    total_views = models.PositiveIntegerField(
         verbose_name="Количество просмотров", default=0
     )
 
     class Meta:
-        verbose_name = ""
-        verbose_name_plural = ""
+        verbose_name = "Просмотры контента"
+        verbose_name_plural = "14. Просмотры контентов"
         db_table = "statistic_daily_content_total_view"
         ordering = ("-time",)
