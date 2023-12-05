@@ -42,40 +42,37 @@ def hourly_history_task():
     )
     print("Histories", histories, from_time, to_time)
     for history in histories:
-        try:
-            # Content
-            if history.content_id:
-                exists, category_id = etc.is_content_exists_or_create(
-                    {"content_id": history.content_id, "episode_id": history.episode_id},
-                    history.slug
+        # Content
+        if history.content_id:
+            exists, category_id = etc.is_content_exists_or_create(
+                {"content_id": history.content_id, "episode_id": history.episode_id},
+                history.slug
+            )
+            if exists:
+                content, _  = models.ContentHour.objects.get_or_create(
+                    time=from_time, content_id=history.content_id, episode_id=history.episode_id,
+                    sid=history.sid, age_group=history.age_group, gender=history.gender
                 )
-                if exists:
-                    content, _  = models.ContentHour.objects.get_or_create(
-                        time=from_time, content_id=history.content_id, episode_id=history.episode_id,
-                        sid=history.sid, age_group=history.age_group, gender=history.gender
-                    )
-                    content.watched_duration += history.duration
-                    content.save()
-            # Broadcast
-            elif history.broadcast_id:
-                if etc.is_broadcast_exists_or_create(history.broadcast_id):
-                    broadcast, _ = models.BroadcastHour.objects.get_or_create(
-                        time=from_time, broadcast_id=history.broadcast_id,
-                        sid=history.sid, age_group=history.age_group, gender=history.gender
-                    )
-                    broadcast.watched_duration += history.duration
-                    broadcast.save()
-                    category_id = 5
-            # View Category
-            if category_id:
-                view_category, _ = models.CategoryViewHour.objects.get_or_create(
-                    time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
-                )
-                view_category.watched_users_count += 1
-                view_category.save()
+                content.watched_duration += history.duration
+                content.save()
+                # View Category
 
-        except Exception as e:
-            print("Exception", e)
+        # Broadcast
+        elif history.broadcast_id:
+            if etc.is_broadcast_exists_or_create(history.broadcast_id):
+                broadcast, _ = models.BroadcastHour.objects.get_or_create(
+                    time=from_time, broadcast_id=history.broadcast_id,
+                    sid=history.sid, age_group=history.age_group, gender=history.gender
+                )
+                broadcast.watched_duration += history.duration
+                broadcast.save()
+                category_id = 5
+        if category_id:
+            view_category, _ = models.CategoryViewHour.objects.get_or_create(
+                time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+            )
+            view_category.watched_users_count += 1
+            view_category.save()
 
 
 @shared_task(name="daily-history-task")
@@ -148,7 +145,6 @@ def daily_history_task():
 
     daily_broadcasts = models.BroadcastDay.objects.filter(time=from_time)
     for broadcast in daily_broadcasts:
-        
         monthly_b = models.BroadcastMonth.objects.create(
             time=from_time, broadcast_id=broadcast.broadcast_id,
             sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender
@@ -162,14 +158,13 @@ def daily_history_task():
         )
         view_category.watched_users_count += 1
         view_category.save()
-        
     # Monthly ended
     
     cursor = connection.cursor()
-    query = f"""SELECT time_bucket('1 day', time) AS interval, content_id, SUM(watched_users_count), age_group, gender
+    query = f"""SELECT content_id, SUM(watched_users_count), age_group, gender
                 FROM statistic_content_month
                 WHERE (time = '{from_time}')
-                GROUP BY interval, content_id, watched_users_count, age_group, gender"""
+                GROUP BY content_id, watched_users_count, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
     print("STAT", stat)
@@ -180,14 +175,14 @@ def daily_history_task():
         exists, category_id = etc.is_content_exists_or_create({"content_id": content_id}, str(content_id))
 
         if exists:
-            detail, _ = models.DailyDetailView.objects.get_or_create(
-                time=from_time, category_id=category_id, age_group=age_group, gender=gender
+            detail, _ = models.DailyTotalViews.objects.get_or_create(
+                time=from_time, age_group=age_group, gender=gender
             )
             detail.total_views += watched_users_count
             detail.save()
             
-            total, _ = models.DailyTotalView.objects.get_or_create(
-                time=time, age_group=age_group, gender=gender
+            total, _ = models.DailyContentViews.objects.get_or_create(
+                time=time, category_id=category_id, age_group=age_group, gender=gender
             )
             total.total_views += watched_users_count
             total.save()

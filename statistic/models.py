@@ -329,7 +329,7 @@ class CategoryViewMonth(TimescaleModel):
 
 
 # --------------------------------------------------------------------
-class DailyTotalView(TimescaleModel):
+class DailyTotalViews(TimescaleModel):
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )
@@ -343,13 +343,11 @@ class DailyTotalView(TimescaleModel):
     class Meta:
         verbose_name = "Общий просмотр"
         verbose_name_plural = "12. Общие просмотры"
-        db_table = "statistic_daily_total_view"
+        db_table = "statistic_daily_total_views"
         ordering = ("-time",)
 
 
-# TODO TOP 5 по Категориям ( выбирает категория -> получает топ 5 ), TOP 5 Фильмов или Эпизодов
-# ????
-class DailyDetailView(TimescaleModel):
+class DailyContentViews(TimescaleModel):
     content_id = models.PositiveIntegerField(
         verbose_name="ID Контента", blank=True, null=True
     )
@@ -371,7 +369,7 @@ class DailyDetailView(TimescaleModel):
     class Meta:
         verbose_name = "Детальные просмотры"
         verbose_name_plural = "13. Детальные просмотры"
-        db_table = "statistic_daily_detail_view"
+        db_table = "statistic_daily_content_views"
         ordering = ("-time",)
 
 

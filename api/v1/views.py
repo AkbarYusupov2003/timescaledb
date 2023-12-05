@@ -36,7 +36,7 @@ class AllowedSubscriptionListAPIView(generics.ListAPIView):
 
 
 class CategoryListAPIView(generics.ListAPIView):
-    queryset = internal_models.Category.objects.filter(ordering__isnull=False)
+    queryset = internal_models.Category.objects.all().filter(ordering__isnull=False)
     serializer_class = serializers.CategorySerializer
 
 
@@ -916,7 +916,7 @@ class MostViewedContentAPIView(APIView):
         now = datetime.datetime.today()
         month_ago = now - datetime.timedelta(days=30)
         query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
-                    FROM statistic_daily_total_view
+                    FROM statistic_daily_total_views
                     WHERE (time BETWEEN '{month_ago}' AND '{now}') {raw_filter}
                     GROUP BY interval"""
         cursor.execute(query)
@@ -926,7 +926,7 @@ class MostViewedContentAPIView(APIView):
             last_views.append({"time": s[0], "count": s[1]})
         # MOST VIEWED
         query = f"""SELECT content_id, episode_id, category_id, SUM(total_views)
-                    FROM statistic_daily_detail_view
+                    FROM statistic_daily_content_views
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY content_id, episode_id, category_id"""
         cursor.execute(query)

@@ -92,14 +92,14 @@ class ViewCategoryMonth(admin.ModelAdmin):
 
 
 # -------------------------------------------------------------------------------------------------
-@admin.register(models.DailyTotalView)
-class DailyTotalViewAdmin(admin.ModelAdmin):
+@admin.register(models.DailyTotalViews)
+class DailyTotalViewsAdmin(admin.ModelAdmin):
     list_display = ("age_group", "gender", "total_views", "time")
     list_filter = ("age_group", "gender")
 
 
-@admin.register(models.DailyDetailView)
-class DailyDetailViewAdmin(admin.ModelAdmin):
+@admin.register(models.DailyContentViews)
+class DailyContentViewsAdmin(admin.ModelAdmin):
     list_display = ("content_id", "episode_id", "category_id", "age_group", "gender", "total_views", "time")
     list_filter = ("category_id", "age_group", "gender")
 

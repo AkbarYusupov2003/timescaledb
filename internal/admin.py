@@ -1,3 +1,4 @@
+from django.http.request import HttpRequest
 from django.urls import path
 from django.contrib import admin
 from django.http import HttpResponseRedirect
@@ -23,6 +24,9 @@ class SponsorAdmin(admin.ModelAdmin):
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ("pk", "name_ru", "ordering")
     search_fields = ("name",)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(models.BroadcastCategory)
