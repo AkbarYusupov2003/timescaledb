@@ -9,6 +9,25 @@ class HistoryAdmin(admin.ModelAdmin):
     list_filter = ("time",)
 
 
+# -------------------------------------------------------------------------------------------------
+@admin.register(models.Register)
+class RegisterAdmin(admin.ModelAdmin):
+    list_display = ("pk", "count", "time")
+    list_filter = ("time",)
+
+
+@admin.register(models.Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("pk", "sub_id", "count", "time")
+    list_filter = ("time",)
+
+
+# -------------------------------------------------------------------------------------------------
+@admin.register(models.DeviceVisit)
+class DeviceVisitAdmin(admin.ModelAdmin):
+    list_display = ("time", )
+
+
 # Content Statistic
 @admin.register(models.ContentHour)
 class ContentHourAdmin(admin.ModelAdmin):
@@ -48,6 +67,12 @@ class BroadcastMonthAdmin(admin.ModelAdmin):
 
 
 # -------------------------------------------------------------------------------------------------
+@admin.register(models.AdsView)
+class AdsViewAdmin(admin.ModelAdmin):
+    list_display = ("time",)
+
+
+# -------------------------------------------------------------------------------------------------
 @admin.register(models.CategoryViewHour)
 class ViewCategoryHour(admin.ModelAdmin):    
     list_display = ("category_id", "watched_users_count", "age_group", "gender", "time")
@@ -67,25 +92,6 @@ class ViewCategoryMonth(admin.ModelAdmin):
 
 
 # -------------------------------------------------------------------------------------------------
-@admin.register(models.Register)
-class RegisterAdmin(admin.ModelAdmin):
-    list_display = ("pk", "count", "time")
-    list_filter = ("time",)
-
-
-@admin.register(models.Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("pk", "sub_id", "count", "time")
-    list_filter = ("time",)
-
-
-@admin.register(models.Report)
-class ReportAdmin(admin.ModelAdmin):
-    list_display = ("section",  "status", "created_at")
-    list_filter = ("created_at",)
-# -------------------------------------------------------------------------------------------------
-
-
 @admin.register(models.DailyTotalView)
 class DailyTotalViewAdmin(admin.ModelAdmin):
     list_display = ("age_group", "gender", "total_views", "time")
@@ -96,3 +102,10 @@ class DailyTotalViewAdmin(admin.ModelAdmin):
 class DailySeparatedViewAdmin(admin.ModelAdmin):
     list_display = ("content_id", "broadcast_id", "episode_id", "category_id", "age_group", "gender", "total_views", "time")
     list_filter = ("category_id", "age_group", "gender")
+
+
+# -------------------------------------------------------------------------------------------------
+@admin.register(models.Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ("section",  "status", "created_at")
+    list_filter = ("created_at",)
