@@ -353,14 +353,14 @@ class DailyTotalView(TimescaleModel):
     )
     
     class Meta:
-        verbose_name = "Общий просмотр за день"
-        verbose_name_plural = "10. Общие просмотры за день"
+        verbose_name = "Общий просмотр"
+        verbose_name_plural = "10. Общие просмотры"
         db_table = "statistic_daily_total_view"
         ordering = ("-time",)
 
+
 # TODO TOP 5 по Категориям ( выбирает категория -> получает топ 5 ), TOP 5 Фильмов или Эпизодов
 # ????
-
 class DailyContentTotalView(TimescaleModel):
     content_id = models.PositiveIntegerField(
         verbose_name="ID Контента", blank=True, null=True

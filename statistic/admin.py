@@ -87,5 +87,5 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(models.DailyTotalView)
 class DailyTotalViewAdmin(admin.ModelAdmin):
-    list_display = ("category_id", "age_group", "gender", "total_views")
+    list_display = ("category_id", "age_group", "gender", "total_views", "time")
     list_filter = ("category_id",)

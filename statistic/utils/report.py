@@ -10,7 +10,6 @@ from statistic import models
 
 @shared_task
 def generate_content_report(pk, data, from_date, to_date):
-    print(pk, data)
     try:
         report = models.Report.objects.get(pk=pk)
         table = tablib.Dataset(headers=("С", "До", "ID Контента", "ID Эпизода", "Название", "Категория", "Количество просмотров", "Время просмотров", "Длительность", "Язык"))

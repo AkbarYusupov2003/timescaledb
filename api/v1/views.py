@@ -280,8 +280,7 @@ class ContentStatDetailAPIView(APIView):
                 table_name = "statistic_content_month"
             else:
                 return Response({"error": "period validation"}, status=400)
-        except Exception as e:
-            print("exception", e)
+        except:
             return Response({"error": "date validation"}, status=400)
         
         content_id = f"(content_id = '{content.content_id}')"
@@ -640,8 +639,6 @@ class CategoryViewStatAPIView(APIView):
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, watched_users_count, age_group, gender, category_id"""
-        print("raw_filter", raw_filter)
-        print("QUERY", query)
         cursor.execute(query)
         stat = cursor.fetchall()
         all_time = children_count = men_count = women_count = 0
@@ -917,7 +914,14 @@ class MostViewedContentAPIView(APIView):
         # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on category(if category entered)
         # FILTERS: from_date, to_date, category, age_group, gender:  Return Top5 based on content_id, episode_id
         cursor = connection.cursor()
-        # TODO CALCULATE statistic_daily_total_view
-        # TODO CALCULATE second table
-
+        raw_filter = " ".join(raw_filter) if raw_filter else ""
+        query = f"""SELECT time_bucket('1 day', time) AS interval, content_id, SUM(watched_users_count), age_group, gender
+                    FROM statistic_daily_content_total_view
+                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
+                    GROUP BY interval, content_id, watched_users_count, age_group, gender"""
+        cursor.execute(query)
+        stat = cursor.fetchall()
+        print("STAT", stat)
+        
+        
         return Response({"worked": True}, status=200)
