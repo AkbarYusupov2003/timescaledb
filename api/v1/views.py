@@ -891,8 +891,6 @@ class MostViewedContentAPIView(APIView):
         gender = request.GET.get("gender")
 
         raw_filter = []
-        # if category.isnumeric():
-        #     raw_filter.append(f"AND (category_id = {category})")
 
         if age_group[0]:
             for age in age_group:
@@ -914,78 +912,63 @@ class MostViewedContentAPIView(APIView):
 
         cursor = connection.cursor()
         raw_filter = " ".join(raw_filter) if raw_filter else ""
-        
         # LAST MONTH VIEWS
         now = datetime.datetime.today()
         month_ago = now - datetime.timedelta(days=30)
-        
         query = f"""SELECT time_bucket('1 day', time) AS interval, SUM(total_views)
                     FROM statistic_daily_total_view
                     WHERE (time BETWEEN '{month_ago}' AND '{now}') {raw_filter}
                     GROUP BY interval"""
         cursor.execute(query)
         stat = cursor.fetchall()
-        print("STAT1", stat)
         last_views = []
         for s in stat:
             last_views.append({"time": s[0], "count": s[1]})
-        
         # MOST VIEWED
-        query = f"""SELECT content_id, episode_id, SUM(total_views)
+        query = f"""SELECT content_id, episode_id, category_id, SUM(total_views)
                     FROM statistic_daily_detail_view
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
-                    GROUP BY content_id, episode_id"""
-        print("query", query)
+                    GROUP BY content_id, episode_id, category_id"""
         cursor.execute(query)
         stat = cursor.fetchall()
-        print("STAT2", stat)
-        most_viewed = []
+        content_views = []
         for s in stat:
-            content_id, episode_id, total_views = s
+            content_id, episode_id, category_id, total_views = s
             exists = False
-            for val in most_viewed:
+            for val in content_views:
                 if val.get("content_id") == content_id and val.get("episode_id") == episode_id:
                         val["total_views"] += total_views
                         exists = True
             if not exists:
-                most_viewed.append({"content_id": content_id, "episode_id": episode_id, "category": category, "total_views": total_views})            
-            
-            print(s)
-        
+                content_views.append({"content_id": content_id, "episode_id": episode_id, "category": category_id, "total_views": total_views})            
 
+        most_viewed = sorted(content_views, key=lambda d: d["total_views"], reverse=True)
+        most_viewed_by_category = []
+        for view in most_viewed:
+            if len(most_viewed_by_category) <= 5:
+                if str(view["category"]) == category:
+                    most_viewed_by_category.append(view.copy())
+            else:
+                break
 
-        # TODO ADD data_extractor.get_data(data_extractor.CONTENT_DETAIL_PICTURE_URL.format("3555"), {})
-        
-        
-        # for s in stat:
-        #     time, watched_users, raw_age_group, gender, category_id = s
-        #     exists = update_res = False
-        #     if raw_age_group in utils.CHILDREN_AGE_GROUPS:
-        #         calc_gender = "children"
-        #         children_count += watched_users
-        #     elif gender == "M":
-        #         calc_gender = "men"
-        #         men_count += watched_users
-        #     else:
-        #         calc_gender = "women"
-        #         women_count += watched_users
-        #     if category == str(category_id):
-        #         update_res = True
-        #     elif not category:
-        #         update_res = True
-        #     if update_res:
-        #         for val in res:
-        #             if val.get("time") == time:
-        #                 val[calc_gender] += watched_users
-        #                 exists = True
-        #         if not exists:
-        #             res.append({"time": time, "men": 0, "women": 0, "children": 0})
-        #             res[-1][calc_gender] += watched_users
-        #     if not(category_id in categories_dict.keys()):
-        #         categories_dict[category_id] = {"men": 0, "women": 0, "children": 0}
-        #     categories_dict[category_id][calc_gender] += watched_users   
-        
+        most_viewed = most_viewed[:5]
+        for view in most_viewed:
+            to_update = data_extractor.get_data(data_extractor.CONTENT_DETAIL_PICTURE_URL.format(view["content_id"]), {})
+            content = internal_models.Content.objects.get(content_id=view["content_id"])
+            if view["episode_id"]:
+                to_update["episode_id"] = content.title_ru.split("|")[-2].strip()
+            to_update["category"] = internal_models.Category.objects.get(pk=view["category"]).name_ru
+            view.update(to_update)
+
+        for view in most_viewed_by_category:
+            to_update = data_extractor.get_data(data_extractor.CONTENT_DETAIL_PICTURE_URL.format(view["content_id"]), {})
+            content = internal_models.Content.objects.get(content_id=view["content_id"])
+            if view["episode_id"]:
+                to_update["episode_id"] = content.title_ru.split("|")[-2].strip()
+            to_update["category"] = internal_models.Category.objects.get(pk=view["category"]).name_ru
+            view.update(to_update)
+
         return Response(
-            {"last_views": last_views, "most_viewed": "", "most_viewed_by_categories": ""},
+            {"last_views": last_views, "most_viewed": most_viewed, "most_viewed_by_category": most_viewed_by_category},
             status=200
         )
