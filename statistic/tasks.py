@@ -161,31 +161,32 @@ def daily_history_task():
     # Monthly ended
 
     cursor = connection.cursor()
-    query = f"""SELECT content_id, SUM(watched_users_count), age_group, gender
+    query = f"""SELECT content_id, episode_id, SUM(watched_users_count), age_group, gender
                 FROM statistic_content_month
                 WHERE (time = '{from_time}')
-                GROUP BY content_id, watched_users_count, age_group, gender"""
+                GROUP BY content_id, episode_id, watched_users_count, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
     print("STAT", stat)
 
     for s in stat:
-        # TODO TEST
-        time, content_id, watched_users_count, age_group, gender = s
-        exists, category_id = etc.is_content_exists_or_create({"content_id": content_id}, str(content_id))
+        content_id, episode_id, watched_users_count, age_group, gender = s
 
+        slug = f"{content_id}_{episode_id if episode_id else 'null' }"
+        exists, category_id = etc.is_content_exists_or_create(
+            {"content_id": content_id, "episode_id": episode_id}, slug
+        )
         if exists:
-            detail, _ = models.DailyTotalViews.objects.get_or_create(
+            total, _ = models.DailyTotalViews.objects.get_or_create(
                 time=from_time, age_group=age_group, gender=gender
-            )
-            detail.total_views += watched_users_count
-            detail.save()
-            
-            total, _ = models.DailyContentViews.objects.get_or_create(
-                time=time, category_id=category_id, age_group=age_group, gender=gender
             )
             total.total_views += watched_users_count
             total.save()
+            content, _ = models.DailyContentViews.objects.get_or_create(
+                time=from_time, content_id=content_id, episode_id=episode_id, category_id=category_id, age_group=age_group, gender=gender
+            )
+            content.total_views += watched_users_count
+            content.save()
 
 
 # Data Update
