@@ -159,7 +159,7 @@ def daily_history_task():
         view_category.watched_users_count += 1
         view_category.save()
     # Monthly ended
-    
+
     cursor = connection.cursor()
     query = f"""SELECT content_id, SUM(watched_users_count), age_group, gender
                 FROM statistic_content_month
@@ -168,9 +168,9 @@ def daily_history_task():
     cursor.execute(query)
     stat = cursor.fetchall()
     print("STAT", stat)
-    
+
     for s in stat:
-        # TODO add data to DailyDetailView also
+        # TODO TEST
         time, content_id, watched_users_count, age_group, gender = s
         exists, category_id = etc.is_content_exists_or_create({"content_id": content_id}, str(content_id))
 
