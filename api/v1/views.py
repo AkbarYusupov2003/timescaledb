@@ -15,7 +15,7 @@ from statistic import models
 from internal import models as internal_models
 
 
-# Contents: http://127.0.0.1:8000/content-stat/?period=hours&from_date=2023-11-30-11h&to_date=2023-12-11-0h
+# Contents: http://127.0.0.1:8000/content-stat/?period=month&from_date=2023-12-1-0h&to_date=2023-12-31-23h
 # Content detail: http://127.0.0.1:8000/content-stat/3555_10796/?period=hours&from_date=2023-11-30-11h&to_date=2023-12-11-0h
 
 # Subscription: http://127.0.0.1:8000/subscription-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
@@ -182,6 +182,10 @@ class ContentStatAPIView(APIView):
         )
 
         if ordering in order_before_execution:
+            if ordering == "title":
+                ordering = "title_ru"
+            elif ordering == "-title":
+                ordering = "-title_ru"
             queryset = queryset.order_by(ordering)
 
         if not (ordering in order_after_execution):
@@ -352,7 +356,7 @@ class ContentStatDetailAPIView(APIView):
                 total_watched_users += watched_users
 
         content["data"] = data
-        content["total"] = total_watched_users
+        content["period-total"] = total_watched_users
         content["all-time"] = 0
         
         getcontext().prec = 3
