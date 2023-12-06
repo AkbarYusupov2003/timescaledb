@@ -576,8 +576,8 @@ class BroadcastStatDetailAPIView(APIView):
         return Response(broadcast, status=200)
 
 
-# Category View
-class CategoryViewStatAPIView(APIView):
+# Category Views
+class CategoryViewsStatAPIView(APIView):
     
     def get(self, request, *args, **kwargs):
         from_date = request.GET.get("from_date")

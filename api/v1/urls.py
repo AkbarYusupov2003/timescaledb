@@ -21,7 +21,7 @@ urlpatterns = [
     path("broadcast-stat/<int:pk>/", views.BroadcastStatDetailAPIView.as_view()),
     #
     # _____________________________________________________________________________________
-    path("category-views/", views.CategoryViewStatAPIView.as_view()), # HERE
+    path("category-views/", views.CategoryViewsStatAPIView.as_view()), # HERE
     #
     path("register-stat/", views.RegisterStatAPIView.as_view()),
     path("register-stat/total/", views.RegisterTotalStatAPIView.as_view()),
