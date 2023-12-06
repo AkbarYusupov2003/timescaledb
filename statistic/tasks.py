@@ -1,6 +1,6 @@
 import datetime
 from django.db import connection
-from django.db.models import Sum, Count
+from django.db.models import Sum
 from celery import shared_task
 from celery.schedules import crontab
 
@@ -10,25 +10,29 @@ from internal import models as internal_models
 from statistic.utils import data_extractor, etc, validators
 
 
-# Register
-@shared_task(name='hourly-register-task')
-def hourly_register_task():
+@shared_task(name="hourly-register-subscription-task")
+def hourly_register_subscription_task():
     period = "hours"
     time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
-    data = data_extractor.get_data(data_extractor.SIGNUP_URL, params={'period': period})
-    if type(data) == dict:
-        models.Register.objects.create(count=data.get("count", 0), time=time)
+    register_data = data_extractor.get_data(data_extractor.SIGNUP_URL, params={'period': period})
+    if type(register_data) == dict:
+        models.RegisterHour.objects.create(count=register_data.get("count", 0), time=time)
+    subscription_data = data_extractor.get_data(data_extractor.TRANSACTION_URL, params={'period': period})
+    if type(subscription_data) == dict:
+        for key, value in subscription_data.items():
+            models.SubscriptionHour.objects.create(sub_id=key, count=value, time=time)
 
 
-# Subscription
-@shared_task(name='hourly-subscription-task')
-def hourly_subscription_task():
-    period = "hours"
-    time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(hours=1)
-    data = data_extractor.get_data(data_extractor.TRANSACTION_URL, params={'period': period})
-    if type(data) == dict:
-        for key, value in data.items():
-            models.Subscription.objects.create(sub_id=key, count=value, time=time)
+@shared_task(name="daily-register-subscription-task")
+def daily_register_subscription_task():
+    yesterday = datetime.datetime.today() - datetime.timedelta(days=1)
+    creation_time = yesterday.replace(hour=12, minute=0, second=0, microsecond=0)
+    registers_count = models.RegisterHour.objects.filter(time__date=yesterday).aggregate(Sum("count"))["count__sum"]
+    models.RegisterDay.objects.create(time=creation_time, count=registers_count)
+    subscriptions = internal_models.AllowedSubscription.objects.all().values_list("pk", flat=True)
+    for sub_id in subscriptions:
+        subscription_count = models.SubscriptionHour.objects.filter(time__date=yesterday, sub_id=sub_id).aggregate(Sum("count"))["count__sum"]
+        models.SubscriptionDay.objects.create(time=creation_time, count=subscription_count, sub_id=sub_id)
 
 
 # History
@@ -36,7 +40,6 @@ def hourly_subscription_task():
 def hourly_history_task():
     to_time = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(hours=1)
-    
     histories = models.History.objects.filter(
         time__range=(from_time, to_time),
     )
@@ -55,8 +58,6 @@ def hourly_history_task():
                 )
                 content.watched_duration += history.duration
                 content.save()
-                # View Category
-
         # Broadcast
         elif history.broadcast_id:
             if etc.is_broadcast_exists_or_create(history.broadcast_id):
@@ -67,6 +68,7 @@ def hourly_history_task():
                 broadcast.watched_duration += history.duration
                 broadcast.save()
                 category_id = 5
+        # View Category
         if category_id:
             view_category, _ = models.CategoryViewHour.objects.get_or_create(
                 time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
@@ -432,6 +434,14 @@ def daily_broadcast_update_task(update_relations=False):
 
 
 app.conf.beat_schedule = {
+    "hourly-register-subscription-task": {
+        "task": "hourly-register-subscription-task",
+        "schedule": crontab(hour="*", minute="1"),
+    },
+    "daily-register-subscription-task": {
+        "task": "daily-register-subscription-task",
+        "schedule": crontab(hour="0", minute="1"),
+    },
     # Data Update
     "daily-relations-update-task": {
         "task": "daily-relations-update-task",
@@ -445,11 +455,7 @@ app.conf.beat_schedule = {
         "task": "daily-broadcast-update-task",
         "schedule": crontab(hour="0", minute="15"),
     },
-    # "daily-total-views-task": {
-    #     "task": "daily-total-views-task",
-    #     "schedule": crontab(hour="0", minute="30"),
-    # },
-    #
+    # End
     "daily-history-task": {
         "task": "daily-history-task",
         "schedule": crontab(hour="0", minute="20"),
@@ -457,14 +463,5 @@ app.conf.beat_schedule = {
     "hourly-history-task": {
         "task": "hourly-history-task",
         "schedule": crontab(hour="*", minute="5"),
-    },
-    #
-    "hourly-register-task": {
-        "task": "hourly-register-task",
-        "schedule": crontab(hour="*", minute="1"),
-    },
-    "hourly-subscription-task": {
-        "task": "hourly-subscription-task",
-        "schedule": crontab(hour="*", minute="1"),
     },
 }

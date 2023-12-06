@@ -10,14 +10,26 @@ class HistoryAdmin(admin.ModelAdmin):
 
 
 # -------------------------------------------------------------------------------------------------
-@admin.register(models.Register)
-class RegisterAdmin(admin.ModelAdmin):
+@admin.register(models.RegisterHour)
+class RegisterHourAdmin(admin.ModelAdmin):
     list_display = ("pk", "count", "time")
     list_filter = ("time",)
 
 
-@admin.register(models.Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
+@admin.register(models.RegisterDay)
+class RegisterDayAdmin(admin.ModelAdmin):
+    list_display = ("pk", "count", "time")
+    list_filter = ("time",)
+
+
+@admin.register(models.SubscriptionHour)
+class SubscriptionHourAdmin(admin.ModelAdmin):
+    list_display = ("pk", "sub_id", "count", "time")
+    list_filter = ("time",)
+
+
+@admin.register(models.SubscriptionDay)
+class SubscriptionDayAdmin(admin.ModelAdmin):
     list_display = ("pk", "sub_id", "count", "time")
     list_filter = ("time",)
 

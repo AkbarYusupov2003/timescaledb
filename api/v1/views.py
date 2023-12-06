@@ -734,8 +734,14 @@ class RegisterStatAPIView(APIView):
         to_date = self.request.GET.get("to_date")
         period = self.request.GET.get("period")
         report_param = request.GET.get("report")
-        if not(period in utils.ALLOWED_PERIODS):
+        
+        if period == "hours":
+            table_name = "statistic_register_hour"
+        elif period == "day" or period == "month":
+            table_name = "statistic_register_day"
+        else:
             return Response({"error": "period validation"}, status=400)
+
         try:
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
@@ -744,10 +750,13 @@ class RegisterStatAPIView(APIView):
             return Response({"error": "date validation"}, status=400)
         # ------------------------------------------------------------------------------------------
         cursor = connection.cursor()
+        # BASED ON PERIOD SET TABLE NAME
+        # hours - statistic_register_hour
+        # day, month - statistic_register_month
         cursor.execute(
             f"""
                 SELECT time_bucket('1 {period}', time) AS interval, SUM(count)
-                FROM statistic_register
+                FROM {table_name}
                 WHERE (time BETWEEN '{from_date}' AND '{to_date}')
                 GROUP BY interval
                 ORDER BY interval DESC;
@@ -805,25 +814,32 @@ class SubscriptionStatAPIView(APIView):
         report_param = request.GET.get("report")
         # validation
         allowed_subs = list(internal_models.AllowedSubscription.objects.all().values_list("pk", flat=True))        
-        if not(period in utils.ALLOWED_PERIODS):
+        
+        if period == "hours":
+            table_name = "statistic_subscription_hour"
+        elif period == "day" or period == "month":
+            table_name = "statistic_subscription_day"
+        else:
             return Response({"error": "period validation"}, status=400)
+
         try:
             if not(int(sub_id) in allowed_subs):
                 return Response({"error": "sub_id validation"}, status=400)
         except:
             return Response({"error": "sub_id validation"}, status=400)
+
         try:
             date_format = "%Y-%m-%d"
             from_date = datetime.datetime.strptime(from_date, date_format)
             to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
         except:
             return Response({"error": "date validation"}, status=400)
-        # -----------
+        # ------------------------------------------------------------------------------------------
         cursor = connection.cursor()
         cursor.execute(
             f"""
                 SELECT time_bucket('1 {period}', time) AS interval, SUM(count)
-                FROM statistic_subscription
+                FROM {table_name}
                 WHERE (time BETWEEN '{from_date}' AND '{to_date}') AND (sub_id = '{sub_id}')
                 GROUP BY interval
                 ORDER BY interval DESC;

@@ -69,32 +69,54 @@ class History(models.Model):
 
 
 # -------------------------------------------------------------------------------------------------
-class Register(TimescaleModel):    
+class RegisterHour(TimescaleModel):    
     count = models.IntegerField(verbose_name="Количество")
 
     class Meta:
-        verbose_name = "Регистрация"
-        verbose_name_plural = "02. Регистрации"
-        db_table = "statistic_register"
+        verbose_name = "Регистрации в час"
+        verbose_name_plural = "02. Регистрации в часы"
+        db_table = "statistic_register_hour"
         ordering = ("-time",)
 
 
-class Subscription(TimescaleModel):
+class RegisterDay(TimescaleModel):
+    count = models.IntegerField(verbose_name="Количество")
+
+    class Meta:
+        verbose_name = "Регистрации в день"
+        verbose_name_plural = "03. Регистрации в дни"
+        db_table = "statistic_register_day"
+        ordering = ("-time",)
+
+
+class SubscriptionHour(TimescaleModel):
     sub_id = models.CharField(verbose_name="ID Подписки", max_length=8)
     count = models.IntegerField(verbose_name="Количество")
     
     class Meta:
-        verbose_name = "Подписка"
-        verbose_name_plural = "03. Подписки"
-        db_table = "statistic_subscription"
+        verbose_name = "Подписки в час"
+        verbose_name_plural = "04. Подписки в часы"
+        db_table = "statistic_subscription_hour"
         ordering = ("-time",)
 
 
+class SubscriptionDay(TimescaleModel):
+    sub_id = models.CharField(verbose_name="ID Подписки", max_length=8)
+    count = models.IntegerField(verbose_name="Количество")
+    
+    class Meta:
+        verbose_name = "Подписки в день"
+        verbose_name_plural = "05. Подписки в дни"
+        db_table = "statistic_subscription_day"
+        ordering = ("-time",)
+
+
+# -------------------------------------------------------------------------------------------------
 class DeviceVisit(TimescaleModel):
     
     class Meta:
         verbose_name = "Посещения с девайса"
-        verbose_name_plural = "04. Посещения с девайсов"
+        verbose_name_plural = "06. Посещения с девайсов"
         db_table = "statistic_device_visit"
         ordering = ("-time",)
 
@@ -122,7 +144,7 @@ class ContentHour(TimescaleModel):
     
     class Meta:
         verbose_name = "Контент за час"
-        verbose_name_plural = "05. Контенты за час"
+        verbose_name_plural = "07. Контенты за час"
         db_table = "statistic_content_hour"
         ordering = ("time",)
 
@@ -149,7 +171,7 @@ class ContentDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Контент за день"
-        verbose_name_plural = "06. Контенты за день"
+        verbose_name_plural = "08. Контенты за день"
         db_table = "statistic_content_day"
         ordering = ("-time",)
 
@@ -179,7 +201,7 @@ class ContentMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Контент за месяц"
-        verbose_name_plural = "07. Контенты за месяц"
+        verbose_name_plural = "09. Контенты за месяц"
         db_table = "statistic_content_month"
         ordering = ("-time",)
 
@@ -204,7 +226,7 @@ class BroadcastHour(TimescaleModel):
     
     class Meta:
         verbose_name = "Телеканал за час"
-        verbose_name_plural = "08. Телеканалы за час"
+        verbose_name_plural = "10. Телеканалы за час"
         db_table = "statistic_broadcast_hour"
         ordering = ("-time",)
 
@@ -228,7 +250,7 @@ class BroadcastDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Телеканал за день"
-        verbose_name_plural = "09. Телеканалы за день"
+        verbose_name_plural = "11. Телеканалы за день"
         db_table = "statistic_broadcast_day"
         ordering = ("-time",)
 
@@ -255,7 +277,7 @@ class BroadcastMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Телеканал за месяц"
-        verbose_name_plural = "10. Телеканалы за месяц"
+        verbose_name_plural = "12. Телеканалы за месяц"
         db_table = "statistic_broadcast_month"
         ordering = ("-time",)
 
@@ -265,7 +287,7 @@ class AdsView(TimescaleModel):
     
     class Meta:
         verbose_name = "Просмотр рекламы"
-        verbose_name_plural = "11. Просмотры реклам"
+        verbose_name_plural = "13. Просмотры реклам"
         db_table = "statistic_ads_view"
         ordering = ("-time",)
 
@@ -285,7 +307,7 @@ class CategoryViewHour(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за час"
-        verbose_name_plural = "14. Просмотры категорий за час"
+        verbose_name_plural = "16. Просмотры категорий за час"
         db_table = "statistic_category_view_hour"
         ordering = ("-time",)
 
@@ -304,7 +326,7 @@ class CategoryViewDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за день"
-        verbose_name_plural = "15. Просмотры категорий за день"
+        verbose_name_plural = "17. Просмотры категорий за день"
         db_table = "statistic_category_view_day"
         ordering = ("-time",)
 
@@ -323,7 +345,7 @@ class CategoryViewMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за месяц"
-        verbose_name_plural = "16. Просмотры категорий за месяц"
+        verbose_name_plural = "18. Просмотры категорий за месяц"
         db_table = "statistic_category_view_month"
         ordering = ("-time",)
 
@@ -342,7 +364,7 @@ class DailyTotalViews(TimescaleModel):
     
     class Meta:
         verbose_name = "Общий просмотр"
-        verbose_name_plural = "12. Общие просмотры"
+        verbose_name_plural = "14. Общие просмотры"
         db_table = "statistic_daily_total_views"
         ordering = ("-time",)
 
@@ -368,7 +390,7 @@ class DailyContentViews(TimescaleModel):
 
     class Meta:
         verbose_name = "Детальные просмотры"
-        verbose_name_plural = "13. Детальные просмотры"
+        verbose_name_plural = "15. Детальные просмотры"
         db_table = "statistic_daily_content_views"
         ordering = ("-time",)
 

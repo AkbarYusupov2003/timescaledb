@@ -23,11 +23,11 @@ urlpatterns = [
     path("category-views/", views.CategoryViewsStatAPIView.as_view()),
     #
     # _____________________________________________________________________________________
-    path("register-stat/", views.RegisterStatAPIView.as_view()),  # HERE
-    path("register-stat/total/", views.RegisterTotalStatAPIView.as_view()),
+    path("register-stat/", views.RegisterStatAPIView.as_view()),  # TODO
+    path("register-stat/total/", views.RegisterTotalStatAPIView.as_view()), # TODO
     #
-    path("subscription-stat/", views.SubscriptionStatAPIView.as_view()),
-    path("subscription-stat/total/", views.SubscriptionTotalStatAPIView.as_view()),
+    path("subscription-stat/", views.SubscriptionStatAPIView.as_view()), # TODO
+    path("subscription-stat/total/", views.SubscriptionTotalStatAPIView.as_view()), # TODO
     #
     path("report/performing/", views.PerformingReportAPIView.as_view()),
     path("report/performed/", views.PerformedReportAPIView.as_view()),
