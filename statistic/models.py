@@ -355,7 +355,7 @@ class DailyContentViews(TimescaleModel):
         verbose_name="ID Эпизода", blank=True, null=True
     )
     #
-    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории")
+    category_id = models.PositiveSmallIntegerField(verbose_name="ID Категории", default=1)
     age_group = models.CharField(
         verbose_name="Возрастная группа", choices=AGE_GROUPS
     )

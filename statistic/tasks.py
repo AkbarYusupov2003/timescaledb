@@ -77,12 +77,12 @@ def hourly_history_task():
 
 @shared_task(name="daily-history-task")
 def daily_history_task():
-    to_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
-    from_time = to_time - datetime.timedelta(days=1) # Yesterday
-    # from_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0) # Yesterday
-    # to_time = from_time + datetime.timedelta(days=1)
-    print("FROM TIME", from_time)
+    to_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    creation_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
+    from_time = to_time - datetime.timedelta(days=1)
+    print("FROM TIME", from_time, to_time)
     # DAILY
+    
     contents = internal_models.Content.objects.all()
     for content in contents:
         histories = models.History.objects.filter(
@@ -90,7 +90,7 @@ def daily_history_task():
         )
         for history in histories:
             daily_c, _ = models.ContentDay.objects.get_or_create(
-                time=from_time, content_id=content.content_id, episode_id=content.episode_id,
+                time=creation_time, content_id=content.content_id, episode_id=content.episode_id,
                 sid=history.sid, age_group=history.age_group, gender=history.gender
             )
             daily_c.watched_duration += history.duration
@@ -99,7 +99,7 @@ def daily_history_task():
             # View Category
             if category_id:
                 view_category, _ = models.CategoryViewDay.objects.get_or_create(
-                    time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+                    time=creation_time, category_id=category_id, age_group=history.age_group, gender=history.gender
                 )
                 view_category.watched_users_count += 1
                 view_category.save()
@@ -111,24 +111,24 @@ def daily_history_task():
         )
         for history in histories:
             daily_b, _ = models.BroadcastDay.objects.get_or_create(
-                time=from_time, broadcast_id=broadcast.broadcast_id,
+                time=creation_time, broadcast_id=broadcast.broadcast_id,
                 sid=history.sid, age_group=history.age_group, gender=history.gender
             )
             daily_b.watched_duration += history.duration
             daily_b.save()
             # View Category
             view_category, _ = models.CategoryViewDay.objects.get_or_create(
-                time=from_time, category_id=5, age_group=history.age_group, gender=history.gender
+                time=creation_time, category_id=5, age_group=history.age_group, gender=history.gender
             )
             view_category.watched_users_count += 1
             view_category.save()
     # Daily ended
 
     # MONTHLY
-    daily_contents = models.ContentDay.objects.filter(time=from_time)
+    daily_contents = models.ContentDay.objects.filter(time=creation_time)
     for content in daily_contents:
         monthly_c = models.ContentMonth.objects.create(
-            time=from_time, content_id=content.content_id, episode_id=content.episode_id,
+            time=creation_time, content_id=content.content_id, episode_id=content.episode_id,
             sid=content.sid, age_group=content.age_group, gender=content.gender
         )
         monthly_c.watched_users_count += 1
@@ -138,15 +138,15 @@ def daily_history_task():
         # View Category
         if category_id:
             view_category, _ = models.CategoryViewMonth.objects.get_or_create(
-                time=from_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+                time=creation_time, category_id=category_id, age_group=history.age_group, gender=history.gender
             )
             view_category.watched_users_count += 1
             view_category.save()
 
-    daily_broadcasts = models.BroadcastDay.objects.filter(time=from_time)
+    daily_broadcasts = models.BroadcastDay.objects.filter(time=creation_time)
     for broadcast in daily_broadcasts:
         monthly_b = models.BroadcastMonth.objects.create(
-            time=from_time, broadcast_id=broadcast.broadcast_id,
+            time=creation_time, broadcast_id=broadcast.broadcast_id,
             sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender
         )
         monthly_b.watched_users_count += 1
@@ -154,7 +154,7 @@ def daily_history_task():
         monthly_b.save()
         # View Category
         view_category, _ = models.CategoryViewMonth.objects.get_or_create(
-            time=from_time, category_id=5, age_group=history.age_group, gender=history.gender
+            time=creation_time, category_id=5, age_group=history.age_group, gender=history.gender
         )
         view_category.watched_users_count += 1
         view_category.save()
@@ -163,7 +163,7 @@ def daily_history_task():
     cursor = connection.cursor()
     query = f"""SELECT content_id, episode_id, SUM(watched_users_count), age_group, gender
                 FROM statistic_content_month
-                WHERE (time = '{from_time}')
+                WHERE (time = '{creation_time}')
                 GROUP BY content_id, episode_id, watched_users_count, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
@@ -177,14 +177,17 @@ def daily_history_task():
             {"content_id": content_id, "episode_id": episode_id}, slug
         )
         if exists:
-            total, _ = models.DailyTotalViews.objects.get_or_create(
-                time=from_time, age_group=age_group, gender=gender
-            )
+            data = {"time": creation_time, "age_group": age_group, "gender": gender}
+            total, _ = models.DailyTotalViews.objects.get_or_create(**data)
             total.total_views += watched_users_count
             total.save()
-            content, _ = models.DailyContentViews.objects.get_or_create(
-                time=from_time, content_id=content_id, episode_id=episode_id, category_id=category_id, age_group=age_group, gender=gender # TODO ERROR
-            )
+
+            if category_id:
+                data.update({"content_id": content_id, "episode_id": episode_id, "category_id": category_id})
+            else:
+                data.update({"content_id": content_id, "episode_id": episode_id})
+                
+            content, _ = models.DailyContentViews.objects.get_or_create(**data)
             content.total_views += watched_users_count
             content.save()
 
@@ -322,7 +325,7 @@ def daily_relations_update_task():
             url = next_url
         else:
             break
-
+ 
 
 @shared_task(name="daily-content-update-task")
 def daily_content_update_task(update_relations=False):
