@@ -39,6 +39,13 @@ class CategoryListAPIView(generics.ListAPIView):
     queryset = internal_models.Category.objects.all()
     serializer_class = serializers.CategorySerializer
 
+    def get_queryset(self):
+        category_views = self.request.GET.get("category_views", "")
+        if category_views == "True":
+            return internal_models.Category.objects.all()
+        else:
+            return internal_models.Category.objects.filter(ordering__isnull=False)
+
 
 class BroadcastCategoryListAPIView(generics.ListAPIView):
     queryset = internal_models.BroadcastCategory.objects.all()
@@ -576,7 +583,7 @@ class BroadcastStatDetailAPIView(APIView):
         return Response(broadcast, status=200)
 
 
-# Category Views
+# Category View
 class CategoryViewsStatAPIView(APIView):
     
     def get(self, request, *args, **kwargs):
