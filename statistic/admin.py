@@ -37,7 +37,7 @@ class SubscriptionDayAdmin(admin.ModelAdmin):
 # -------------------------------------------------------------------------------------------------
 @admin.register(models.DeviceVisit)
 class DeviceVisitAdmin(admin.ModelAdmin):
-    list_display = ("time", )
+    list_display = ("time", "app_type", "device_type", "os_type", "country")
 
 
 # Content Statistic

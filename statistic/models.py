@@ -113,7 +113,36 @@ class SubscriptionDay(TimescaleModel):
 
 # -------------------------------------------------------------------------------------------------
 class DeviceVisit(TimescaleModel):
+    APP_TYPES = (
+        ("app", "app"),
+        ("tv", "tv"),
+        ("web", "web")
+    )
+    DEVICE_TYPES = (
+        ("Smartphone", "Smartphone"),
+        ("Tablet", "Tablet"),
+        ("SmartTV", "SmartTV"), # "TV"
+        ("Desktop", "Desktop"), # "PC"
+    )
+    OS_TYPES = (
+        # "Other",
+        ("Android", "Android"),
+        ("iOS", "iOS"),
+        ("Windows", "Windows"),
+        ("Linux", "Linux"),
+        ("Tizen", "Tizen"),
+        ("Web0S", "Web0S"),
+        ("Mac OS X", "Mac OS X"),
+        ("Chrome OS", "Chrome OS"),
+        ("FreeBSD", "FreeBSD"),
+        ("Ubuntu", "Ubuntu"),
+    )
     
+    app_type = models.CharField(choices=APP_TYPES)
+    device_type = models.CharField(choices=DEVICE_TYPES)
+    os_type = models.CharField(choices=OS_TYPES)
+    country = models.CharField(max_length=32)
+
     class Meta:
         verbose_name = "Посещения с девайса"
         verbose_name_plural = "06. Посещения с девайсов"
@@ -287,7 +316,7 @@ class AdsView(TimescaleModel):
     
     class Meta:
         verbose_name = "Просмотр рекламы"
-        verbose_name_plural = "13. Просмотры реклам"
+        verbose_name_plural = "15. Просмотры реклам"
         db_table = "statistic_ads_view"
         ordering = ("-time",)
 
@@ -364,7 +393,7 @@ class DailyTotalViews(TimescaleModel):
     
     class Meta:
         verbose_name = "Общий просмотр"
-        verbose_name_plural = "14. Общие просмотры"
+        verbose_name_plural = "13. Общие просмотры"
         db_table = "statistic_daily_total_views"
         ordering = ("-time",)
 
@@ -390,7 +419,7 @@ class DailyContentViews(TimescaleModel):
 
     class Meta:
         verbose_name = "Детальные просмотры"
-        verbose_name_plural = "15. Детальные просмотры"
+        verbose_name_plural = "14. Детальные просмотры"
         db_table = "statistic_daily_content_views"
         ordering = ("-time",)
 

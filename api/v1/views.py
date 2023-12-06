@@ -845,6 +845,7 @@ class SubscriptionStatAPIView(APIView):
                 ORDER BY interval DESC;
             """
         )
+
         data = cursor.fetchall()
         if report_param == "True":
             if data:
