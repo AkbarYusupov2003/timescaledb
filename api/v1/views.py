@@ -920,9 +920,9 @@ class DeviceVisitsAPIView(APIView):
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, watched_users_count, age_group, gender, category_id"""
-        # 1: 
+        # 1: Filter with app_type -> FOR EACH "DEVICE TYPE" RETURN LIST OF "OS TYPES" COUNTED DEVICES AND GROUPED BY COUNTRY
         
-        # 2: 
+        # 2: Filter with app_type ->
         
         return Response({"worked": True}, status=200)
 
