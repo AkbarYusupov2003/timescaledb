@@ -77,10 +77,10 @@ def hourly_history_task():
 
 @shared_task(name="daily-history-task")
 def daily_history_task():
-    # to_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
-    # from_time = to_time - datetime.timedelta(days=1) # Yesterday
-    from_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0) # Yesterday
-    to_time = from_time + datetime.timedelta(days=1)
+    to_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
+    from_time = to_time - datetime.timedelta(days=1) # Yesterday
+    # from_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0) # Yesterday
+    # to_time = from_time + datetime.timedelta(days=1)
     print("FROM TIME", from_time)
     # DAILY
     contents = internal_models.Content.objects.all()
@@ -183,7 +183,7 @@ def daily_history_task():
             total.total_views += watched_users_count
             total.save()
             content, _ = models.DailyContentViews.objects.get_or_create(
-                time=from_time, content_id=content_id, episode_id=episode_id, category_id=category_id, age_group=age_group, gender=gender
+                time=from_time, content_id=content_id, episode_id=episode_id, category_id=category_id, age_group=age_group, gender=gender # TODO ERROR
             )
             content.total_views += watched_users_count
             content.save()

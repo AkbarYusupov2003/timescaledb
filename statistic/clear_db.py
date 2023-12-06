@@ -7,7 +7,7 @@ clear = [
     models.ContentHour, models.ContentDay, models.ContentMonth,
     models.BroadcastHour, models.BroadcastDay, models.BroadcastMonth,
     models.CategoryViewHour, models.CategoryViewDay, models.CategoryViewMonth,
-    # models.DailyTotalViews, models.DailyContentViews,
+    models.DailyTotalViews, models.DailyContentViews,
     models.Report
 ]
 
