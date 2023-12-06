@@ -16,7 +16,7 @@ from internal import models as internal_models
 
 
 # Contents: http://127.0.0.1:8000/content-stat/?period=month&from_date=2023-12-1-0h&to_date=2023-12-31-23h
-# Content detail: http://127.0.0.1:8000/content-stat/3555_10796/?period=hours&from_date=2023-11-30-11h&to_date=2023-12-11-0h
+# Content detail: http://127.0.0.1:8000/content-stat/3555_10796/?period=hours&from_date=2023-12-1-0h&to_date=2023-12-31-23h
 
 # Subscription: http://127.0.0.1:8000/subscription-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
 # Register: http://127.0.0.1:8000/register-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
@@ -427,10 +427,7 @@ class BroadcastStatAPIView(APIView):
         broadcasts_number = queryset.count()
         
         order_before_execution = (
-            "duration", "-duration", "id", "-id", "title", "-title"
-        )
-        order_after_execution = (
-            "watched_users", "-watched_users", "watched_duration", "-watched_duration"
+            "id", "-id", "title", "-title"
         )
 
         if ordering in order_before_execution:
@@ -441,7 +438,7 @@ class BroadcastStatAPIView(APIView):
             else:
                 queryset = queryset.order_by(ordering)
 
-        if not (ordering in order_after_execution) and not (report_param == "True"):
+        if not (report_param == "True"):
             queryset = queryset[offset:limit+offset]
 
         res = []
@@ -479,14 +476,6 @@ class BroadcastStatAPIView(APIView):
 
             res.append(broadcast)
         if report_param == "True":
-            if ordering == "watched_users":
-                res = sorted(res, key=lambda d: d["watched_users"])
-            elif ordering == "-watched_users":
-                res = sorted(res, key=lambda d: d["watched_users"], reverse=True)
-            elif ordering == "watched_duration":
-                res = sorted(res, key=lambda d: d["watched_duration"])
-            elif ordering == "-watched_duration":
-                res = sorted(res, key=lambda d: d["watched_duration"], reverse=True)
             if res:
                 validate_filters = {"category": category, "ordering": ordering}
                 additional_data = {"count": len(res), "period": period, "from_date": str(from_date), "to_date": str(to_date)}
@@ -501,16 +490,6 @@ class BroadcastStatAPIView(APIView):
                 return Response({"message": "The task for report created"}, status=201)
             else:
                 return Response({"message": "The result of filtration is empty, report will not be created"}, status=417)
-        else:
-            pass
-            if ordering == "watched_users":
-                res = sorted(res, key=lambda d: d["watched_users"])[offset:limit+offset]
-            elif ordering == "-watched_users":
-                res = sorted(res, key=lambda d: d["watched_users"], reverse=True)[offset:limit+offset]
-            elif ordering == "watched_duration":
-                res = sorted(res, key=lambda d: d["watched_duration"])[offset:limit+offset]
-            elif ordering == "-watched_duration":
-                res = sorted(res, key=lambda d: d["watched_duration"], reverse=True)[offset:limit+offset]
 
         return Response({"count": broadcasts_number, "results": res}, status=200)
 
