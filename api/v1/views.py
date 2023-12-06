@@ -742,7 +742,7 @@ class RegisterStatAPIView(APIView):
             to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
         except:
             return Response({"error": "date validation"}, status=400)
-        # -----------
+        # ------------------------------------------------------------------------------------------
         cursor = connection.cursor()
         cursor.execute(
             f"""

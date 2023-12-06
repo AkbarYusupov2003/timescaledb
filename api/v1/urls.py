@@ -20,10 +20,10 @@ urlpatterns = [
     path("broadcast-stat/", views.BroadcastStatAPIView.as_view()),
     path("broadcast-stat/<int:pk>/", views.BroadcastStatDetailAPIView.as_view()),
     #
-    # _____________________________________________________________________________________
-    path("category-views/", views.CategoryViewsStatAPIView.as_view()), # HERE
+    path("category-views/", views.CategoryViewsStatAPIView.as_view()),
     #
-    path("register-stat/", views.RegisterStatAPIView.as_view()),
+    # _____________________________________________________________________________________
+    path("register-stat/", views.RegisterStatAPIView.as_view()),  # HERE
     path("register-stat/total/", views.RegisterTotalStatAPIView.as_view()),
     #
     path("subscription-stat/", views.SubscriptionStatAPIView.as_view()),
