@@ -16,11 +16,12 @@ urlpatterns = [
     #
     path("content-stat/", views.ContentStatAPIView.as_view()),
     path("content-stat/<slug:slug>/", views.ContentStatDetailAPIView.as_view()),
-    # _____________________________________________________________________________________
-    path("broadcast-stat/", views.BroadcastStatAPIView.as_view()), # HERE
+    #
+    path("broadcast-stat/", views.BroadcastStatAPIView.as_view()),
     path("broadcast-stat/<int:pk>/", views.BroadcastStatDetailAPIView.as_view()),
     #
-    path("category-views/", views.CategoryViewStatAPIView.as_view()),
+    # _____________________________________________________________________________________
+    path("category-views/", views.CategoryViewStatAPIView.as_view()), # HERE
     #
     path("register-stat/", views.RegisterStatAPIView.as_view()),
     path("register-stat/total/", views.RegisterTotalStatAPIView.as_view()),

@@ -356,7 +356,7 @@ class ContentStatDetailAPIView(APIView):
                 total_watched_users += watched_users
 
         content["data"] = data
-        content["period-total"] = total_watched_users
+        content["total-for-period"] = total_watched_users
         content["all-time"] = 0
         
         getcontext().prec = 3
@@ -564,7 +564,7 @@ class BroadcastStatDetailAPIView(APIView):
                 total_watched_users += 1
 
         broadcast["results"] = res
-        broadcast["total"] = total_watched_users
+        broadcast["total-for-period"] = total_watched_users
         
         query = f"""SELECT COUNT(*)
                     FROM statistic_broadcast_day
