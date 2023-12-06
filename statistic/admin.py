@@ -35,8 +35,18 @@ class SubscriptionDayAdmin(admin.ModelAdmin):
 
 
 # -------------------------------------------------------------------------------------------------
-@admin.register(models.DeviceVisit)
-class DeviceVisitAdmin(admin.ModelAdmin):
+@admin.register(models.DeviceVisitsHour)
+class DeviceVisitHourAdmin(admin.ModelAdmin):
+    list_display = ("time", "app_type", "device_type", "os_type", "country")
+
+
+@admin.register(models.DeviceVisitsDay)
+class DeviceVisitDayAdmin(admin.ModelAdmin):
+    list_display = ("time", "app_type", "device_type", "os_type", "country")
+
+
+@admin.register(models.DeviceVisitsMonth)
+class DeviceVisitMonthAdmin(admin.ModelAdmin):
     list_display = ("time", "app_type", "device_type", "os_type", "country")
 
 

@@ -23,6 +23,7 @@ GENDERS = (
 
 AGE_GROUPS_LIST = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
 GENDERS_LIST = ("M", "W")
+APP_TYPES_LIST = ("app", "tv", "web")
 
 
 class TimescaleModel(models.Model):
@@ -112,7 +113,7 @@ class SubscriptionDay(TimescaleModel):
 
 
 # -------------------------------------------------------------------------------------------------
-class DeviceVisit(TimescaleModel):
+class DeviceVisitsHour(TimescaleModel):
     APP_TYPES = (
         ("app", "app"),
         ("tv", "tv"),
@@ -121,8 +122,8 @@ class DeviceVisit(TimescaleModel):
     DEVICE_TYPES = (
         ("Smartphone", "Smartphone"),
         ("Tablet", "Tablet"),
-        ("SmartTV", "SmartTV"), # "TV"
-        ("Desktop", "Desktop"), # "PC"
+        ("SmartTV", "SmartTV"),
+        ("Desktop", "Desktop"),
     )
     OS_TYPES = (
         # "Other",
@@ -144,9 +145,83 @@ class DeviceVisit(TimescaleModel):
     country = models.CharField(max_length=32)
 
     class Meta:
-        verbose_name = "Посещения с девайса"
-        verbose_name_plural = "06. Посещения с девайсов"
-        db_table = "statistic_device_visit"
+        verbose_name = "Посещения с девайсов в час"
+        verbose_name_plural = "06. Посещения с девайсов за час"
+        db_table = "statistic_device_visits_hour"
+        ordering = ("-time",)
+
+
+class DeviceVisitsDay(TimescaleModel):
+    APP_TYPES = (
+        ("app", "app"),
+        ("tv", "tv"),
+        ("web", "web")
+    )
+    DEVICE_TYPES = (
+        ("Smartphone", "Smartphone"),
+        ("Tablet", "Tablet"),
+        ("SmartTV", "SmartTV"),
+        ("Desktop", "Desktop"),
+    )
+    OS_TYPES = (
+        ("Android", "Android"),
+        ("iOS", "iOS"),
+        ("Windows", "Windows"),
+        ("Linux", "Linux"),
+        ("Tizen", "Tizen"),
+        ("Web0S", "Web0S"),
+        ("Mac OS X", "Mac OS X"),
+        ("Chrome OS", "Chrome OS"),
+        ("FreeBSD", "FreeBSD"),
+        ("Ubuntu", "Ubuntu"),
+    )
+
+    app_type = models.CharField(choices=APP_TYPES)
+    device_type = models.CharField(choices=DEVICE_TYPES)
+    os_type = models.CharField(choices=OS_TYPES)
+    country = models.CharField(max_length=32)
+
+    class Meta:
+        verbose_name = "Посещения с девайсов день"
+        verbose_name_plural = "07. Посещения с девайсов за день"
+        db_table = "statistic_device_visits_day"
+        ordering = ("-time",)
+
+
+class DeviceVisitsMonth(TimescaleModel):
+    APP_TYPES = (
+        ("app", "app"),
+        ("tv", "tv"),
+        ("web", "web")
+    )
+    DEVICE_TYPES = (
+        ("Smartphone", "Smartphone"),
+        ("Tablet", "Tablet"),
+        ("SmartTV", "SmartTV"),
+        ("Desktop", "Desktop"),
+    )
+    OS_TYPES = (
+        ("Android", "Android"),
+        ("iOS", "iOS"),
+        ("Windows", "Windows"),
+        ("Linux", "Linux"),
+        ("Tizen", "Tizen"),
+        ("Web0S", "Web0S"),
+        ("Mac OS X", "Mac OS X"),
+        ("Chrome OS", "Chrome OS"),
+        ("FreeBSD", "FreeBSD"),
+        ("Ubuntu", "Ubuntu"),
+    )
+
+    app_type = models.CharField(choices=APP_TYPES)
+    device_type = models.CharField(choices=DEVICE_TYPES)
+    os_type = models.CharField(choices=OS_TYPES)
+    country = models.CharField(max_length=32)
+
+    class Meta:
+        verbose_name = "Посещения с девайсов за месяц"
+        verbose_name_plural = "08. Посещения с девайсов за месяц"
+        db_table = "statistic_device_visits_month"
         ordering = ("-time",)
 
 
@@ -173,7 +248,7 @@ class ContentHour(TimescaleModel):
     
     class Meta:
         verbose_name = "Контент за час"
-        verbose_name_plural = "07. Контенты за час"
+        verbose_name_plural = "09. Контенты за час"
         db_table = "statistic_content_hour"
         ordering = ("time",)
 
@@ -200,7 +275,7 @@ class ContentDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Контент за день"
-        verbose_name_plural = "08. Контенты за день"
+        verbose_name_plural = "10. Контенты за день"
         db_table = "statistic_content_day"
         ordering = ("-time",)
 
@@ -230,7 +305,7 @@ class ContentMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Контент за месяц"
-        verbose_name_plural = "09. Контенты за месяц"
+        verbose_name_plural = "11. Контенты за месяц"
         db_table = "statistic_content_month"
         ordering = ("-time",)
 
@@ -255,7 +330,7 @@ class BroadcastHour(TimescaleModel):
     
     class Meta:
         verbose_name = "Телеканал за час"
-        verbose_name_plural = "10. Телеканалы за час"
+        verbose_name_plural = "12. Телеканалы за час"
         db_table = "statistic_broadcast_hour"
         ordering = ("-time",)
 
@@ -279,7 +354,7 @@ class BroadcastDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Телеканал за день"
-        verbose_name_plural = "11. Телеканалы за день"
+        verbose_name_plural = "13. Телеканалы за день"
         db_table = "statistic_broadcast_day"
         ordering = ("-time",)
 
@@ -306,7 +381,7 @@ class BroadcastMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Телеканал за месяц"
-        verbose_name_plural = "12. Телеканалы за месяц"
+        verbose_name_plural = "14. Телеканалы за месяц"
         db_table = "statistic_broadcast_month"
         ordering = ("-time",)
 
@@ -316,7 +391,7 @@ class AdsView(TimescaleModel):
     
     class Meta:
         verbose_name = "Просмотр рекламы"
-        verbose_name_plural = "15. Просмотры реклам"
+        verbose_name_plural = "17. Просмотры реклам"
         db_table = "statistic_ads_view"
         ordering = ("-time",)
 
@@ -336,7 +411,7 @@ class CategoryViewHour(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за час"
-        verbose_name_plural = "16. Просмотры категорий за час"
+        verbose_name_plural = "18. Просмотры категорий за час"
         db_table = "statistic_category_view_hour"
         ordering = ("-time",)
 
@@ -355,7 +430,7 @@ class CategoryViewDay(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за день"
-        verbose_name_plural = "17. Просмотры категорий за день"
+        verbose_name_plural = "19. Просмотры категорий за день"
         db_table = "statistic_category_view_day"
         ordering = ("-time",)
 
@@ -374,7 +449,7 @@ class CategoryViewMonth(TimescaleModel):
 
     class Meta:
         verbose_name = "Просмотр категории за месяц"
-        verbose_name_plural = "18. Просмотры категорий за месяц"
+        verbose_name_plural = "20. Просмотры категорий за месяц"
         db_table = "statistic_category_view_month"
         ordering = ("-time",)
 
@@ -393,7 +468,7 @@ class DailyTotalViews(TimescaleModel):
     
     class Meta:
         verbose_name = "Общий просмотр"
-        verbose_name_plural = "13. Общие просмотры"
+        verbose_name_plural = "15. Общие просмотры"
         db_table = "statistic_daily_total_views"
         ordering = ("-time",)
 
@@ -419,7 +494,7 @@ class DailyContentViews(TimescaleModel):
 
     class Meta:
         verbose_name = "Детальные просмотры"
-        verbose_name_plural = "14. Детальные просмотры"
+        verbose_name_plural = "16. Детальные просмотры"
         db_table = "statistic_daily_content_views"
         ordering = ("-time",)
 

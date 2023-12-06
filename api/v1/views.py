@@ -200,9 +200,9 @@ class ContentStatAPIView(APIView):
 
         res = []
 
+        raw_filter = " ".join(raw_filter) if raw_filter else ""
+        cursor = connection.cursor()
         for content in queryset:
-            cursor = connection.cursor()
-            raw_filter = " ".join(raw_filter) if raw_filter else ""
             content_id = f"AND (content_id = '{content.content_id}')"
             episode_id = f"AND (episode_id = '{content.episode_id}')" if content.episode_id else ""
 
@@ -449,9 +449,9 @@ class BroadcastStatAPIView(APIView):
             queryset = queryset[offset:limit+offset]
 
         res = []
+        cursor = connection.cursor()
         for broadcast in queryset:
             broadcast_id = f"AND (broadcast_id = '{broadcast.broadcast_id}')"
-            cursor = connection.cursor()
             if table_name == "statistic_broadcast_month":
                 query = f"""SELECT time_bucket('1 {period}', time) AS interval, SUM(watched_users_count), SUM(watched_duration)
                             FROM {table_name}
@@ -750,9 +750,6 @@ class RegisterStatAPIView(APIView):
             return Response({"error": "date validation"}, status=400)
         # ------------------------------------------------------------------------------------------
         cursor = connection.cursor()
-        # BASED ON PERIOD SET TABLE NAME
-        # hours - statistic_register_hour
-        # day, month - statistic_register_month
         cursor.execute(
             f"""
                 SELECT time_bucket('1 {period}', time) AS interval, SUM(count)
@@ -886,6 +883,48 @@ class SubscriptionTotalStatAPIView(APIView):
         res = {"total": total if total else 0, "today": today[1] if today else 0}
         return Response(res, status=200)
 
+
+class DeviceVisitsAPIView(APIView):
+
+    def get(self, request, *args, **kwargs):
+        from_date = request.GET.get("from_date")
+        to_date = request.GET.get("to_date")
+        period = request.GET.get("period")
+        app_type = request.GET.get("app_type")
+        
+        raw_filter = []
+        if app_type in models.APP_TYPES_LIST:
+            raw_filter.append(f"AND (app_type = '{app_type}')")
+
+        try:
+            date_format = "%Y-%m-%d-%Hh"
+            from_date = datetime.datetime.strptime(from_date, date_format)
+            to_date = datetime.datetime.strptime(to_date, date_format).replace(minute=59, second=59)
+            if period == "hours":
+                table_name = "statistic_device_visits_hour"
+            elif period == "day":
+                table_name = "statistic_device_visits_day"
+            elif period == "month":
+                table_name = "statistic_device_visits_month"
+            else:
+                return Response({"error": "period validation"}, status=400)
+        except:
+            return Response({"error": "date validation"}, status=400)
+        
+        res = []
+
+        raw_filter = " ".join(raw_filter) if raw_filter else ""
+        cursor = connection.cursor()
+        
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, age_group, gender, category_id
+                    FROM {table_name}
+                    WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
+                    GROUP BY interval, watched_users_count, age_group, gender, category_id"""
+        # 1: 
+        
+        # 2: 
+        
+        return Response({"worked": True}, status=200)
 
 # ------------------------------------------------
 class MostViewedContentAPIView(APIView):
