@@ -915,10 +915,10 @@ class DeviceVisitsAPIView(APIView):
 
         raw_filter = " ".join(raw_filter) if raw_filter else ""
         cursor = connection.cursor()
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, app_type, device_type, os_type, country
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, device_type, os_type, country
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
-                    GROUP BY interval, app_type, device_type, os_type, country"""
+                    GROUP BY interval, device_type, os_type, country"""
         cursor.execute(query)
         stat = cursor.fetchall() 
         print("STAT", stat)
@@ -934,6 +934,7 @@ class DeviceVisitsAPIView(APIView):
         
         
         return Response({"worked": True}, status=200)
+
 
 # ------------------------------------------------
 class MostViewedContentAPIView(APIView):
