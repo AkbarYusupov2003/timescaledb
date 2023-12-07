@@ -915,14 +915,23 @@ class DeviceVisitsAPIView(APIView):
 
         raw_filter = " ".join(raw_filter) if raw_filter else ""
         cursor = connection.cursor()
-        
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, watched_users_count, age_group, gender, category_id
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, app_type, device_type, os_type, country
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
-                    GROUP BY interval, watched_users_count, age_group, gender, category_id"""
-        # 1: Filter with app_type -> FOR EACH "DEVICE TYPE" RETURN LIST OF "OS TYPES" COUNTED DEVICES AND GROUPED BY COUNTRY
+                    GROUP BY interval, app_type, device_type, os_type, country"""
+        cursor.execute(query)
+        stat = cursor.fetchall() 
+        print("STAT", stat)
         
-        # 2: Filter with app_type ->
+        # 1: Filter with app_type -> FOR EACH "DEVICE TYPE" RETURN LIST OF "OS TYPES" COUNTED DEVICES AND GROUPED BY COUNTRY
+        # 1: APP:
+        #           Smartphone: Android, IOS, 
+        #           Tablet: Android, IOS, 
+        #           SmartTV:
+        #           Desktop:
+        
+        
+        
         
         return Response({"worked": True}, status=200)
 
