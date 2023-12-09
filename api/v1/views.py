@@ -784,7 +784,7 @@ class RegisterTotalStatAPIView(APIView):
         cursor.execute(
             f"""
                 SELECT time_bucket('1 day', time) AS interval, SUM(count)
-                FROM statistic_register
+                FROM statistic_register_hour
                 WHERE (time BETWEEN '{today}' AND '{tomorrow}' )
                 GROUP BY interval
                 ORDER BY interval DESC;
@@ -793,7 +793,7 @@ class RegisterTotalStatAPIView(APIView):
         return cursor.fetchone()
 
     def get(self, request, *args, **kwargs):
-        total = models.Register.objects.all().aggregate(Sum("count"))["count__sum"]
+        total = models.RegisterDay.objects.all().aggregate(Sum("count"))["count__sum"]
         today = self.get_queryset()
         res = {"total": total if total else 0, "today": today[1] if today else 0}
         return Response(res, status=200)
@@ -869,7 +869,7 @@ class SubscriptionTotalStatAPIView(APIView):
         cursor.execute(
             f"""
                 SELECT time_bucket('1 day', time) AS interval, SUM(count)
-                FROM statistic_subscription
+                FROM statistic_subscription_hour
                 WHERE (time BETWEEN '{today}' AND '{tomorrow}' )
                 GROUP BY interval
                 ORDER BY interval DESC;
@@ -878,7 +878,7 @@ class SubscriptionTotalStatAPIView(APIView):
         return cursor.fetchone()
 
     def get(self, request, *args, **kwargs):
-        total = models.Subscription.objects.all().aggregate(Sum("count"))["count__sum"]
+        total = models.SubscriptionDay.objects.all().aggregate(Sum("count"))["count__sum"]
         today = self.get_queryset()
         res = {"total": total if total else 0, "today": today[1] if today else 0}
         return Response(res, status=200)
@@ -952,7 +952,7 @@ class DeviceVisitsAPIView(APIView):
                 periodic_res.append(to_append)
         
         if report_param == "True":
-            print
+            print("Report")
         
         
         return Response({"by_devices": res, "by_time": periodic_res}, status=200)
