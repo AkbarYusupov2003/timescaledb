@@ -911,12 +911,12 @@ class DeviceVisitsAPIView(APIView):
         except:
             return Response({"error": "date validation"}, status=400)
         
-        res = []
+        res = {}
         summed_res = []
         
         raw_filter = " ".join(raw_filter) if raw_filter else ""
         cursor = connection.cursor()
-        query = f"""SELECT time_bucket('1 {period}', time) AS interval, device_type, os_type, country
+        query = f"""SELECT time_bucket('1 {period}', time) AS interval, device_type, os_type, country, SUM(count)
                     FROM {table_name}
                     WHERE (time BETWEEN '{from_date}' AND '{to_date}') {raw_filter}
                     GROUP BY interval, device_type, os_type, country"""
@@ -925,12 +925,41 @@ class DeviceVisitsAPIView(APIView):
         print("STAT", stat)
         
         for s in stat:
-            time, device_type, os_type, country = s
-            print("s", s)
-            exists = False
+            time, device_type, os_type, country, count = s
+            if country != "UZ":
+                country = "ANOTHER"
+
+            if not(device_type in res.keys()):
+                res[device_type] = {}
+
+            device = res[device_type]
+            if not (os_type in device.keys()):
+                device.update({os_type: {"UZ": 0, "ANOTHER": 0}})
+                
+            device[os_type][country] += count
+                
+            # for s in stat:
+            #     time = s[0]
+            #     exists = False
+            #     watched_users = s[1] + s[2]
+            #     for val in data:
+            #         if val.get("time") == time:
+            #             val["watched_users"] += watched_users
+            #             exists = True
+            #     if not exists:
+            #         data.append({"time": time, "watched_users": watched_users,})
             
-            if not exists:
-                res.append({""})
+            #     age_group = s[3]
+            #     if age_group in utils.CHILDREN_AGE_GROUPS:
+            #         children[age_group] += watched_users
+            #     else:
+            #         if s[1]:
+            #             men[age_group] += s[1]
+            #         if s[2]:
+            #             women[age_group] += s[2]
+            #     total_watched_users += watched_users
+                
+                
         # res = [
         #  device_type(Smartphone): {
         #      os_type1(Android): {"uzbekistan": 1, "another": 1},
@@ -939,7 +968,7 @@ class DeviceVisitsAPIView(APIView):
         # ]
         
         
-        return Response({"worked": True}, status=200)
+        return Response(res, status=200)
 
 
 # ------------------------------------------------

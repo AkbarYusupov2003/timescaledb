@@ -145,8 +145,8 @@ class DeviceVisitsHour(TimescaleModel):
     count = models.PositiveIntegerField(verbose_name="Количество", default=0)
 
     class Meta:
-        verbose_name = "Посещения с девайсов в час"
-        verbose_name_plural = "06. Посещения с девайсов за час"
+        verbose_name = "Посещения с устройства за час"
+        verbose_name_plural = "06. Посещения с устройств за час"
         db_table = "statistic_device_visits_hour"
         ordering = ("-time",)
 
@@ -183,8 +183,8 @@ class DeviceVisitsDay(TimescaleModel):
     count = models.PositiveIntegerField(verbose_name="Количество", default=0)
 
     class Meta:
-        verbose_name = "Посещения с девайсов день"
-        verbose_name_plural = "07. Посещения с девайсов за день"
+        verbose_name = "Посещения с устройств за день"
+        verbose_name_plural = "07. Посещения с устройств за день"
         db_table = "statistic_device_visits_day"
         ordering = ("-time",)
 
@@ -221,8 +221,8 @@ class DeviceVisitsMonth(TimescaleModel):
     count = models.PositiveIntegerField(verbose_name="Количество", default=0)
 
     class Meta:
-        verbose_name = "Посещения с девайсов за месяц"
-        verbose_name_plural = "08. Посещения с девайсов за месяц"
+        verbose_name = "Посещения с устройства за месяц"
+        verbose_name_plural = "08. Посещения с устройств за месяц"
         db_table = "statistic_device_visits_month"
         ordering = ("-time",)
 

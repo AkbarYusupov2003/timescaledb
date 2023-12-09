@@ -37,17 +37,17 @@ class SubscriptionDayAdmin(admin.ModelAdmin):
 # -------------------------------------------------------------------------------------------------
 @admin.register(models.DeviceVisitsHour)
 class DeviceVisitHourAdmin(admin.ModelAdmin):
-    list_display = ("time", "app_type", "device_type", "os_type", "country")
+    list_display = ("time", "app_type", "device_type", "os_type", "country", "count")
 
 
 @admin.register(models.DeviceVisitsDay)
 class DeviceVisitDayAdmin(admin.ModelAdmin):
-    list_display = ("time", "app_type", "device_type", "os_type", "country")
+    list_display = ("time", "app_type", "device_type", "os_type", "country", "count")
 
 
 @admin.register(models.DeviceVisitsMonth)
 class DeviceVisitMonthAdmin(admin.ModelAdmin):
-    list_display = ("time", "app_type", "device_type", "os_type", "country")
+    list_display = ("time", "app_type", "device_type", "os_type", "country", "count")
 
 
 # Content Statistic
