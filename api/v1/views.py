@@ -891,7 +891,8 @@ class DeviceVisitsAPIView(APIView):
         to_date = request.GET.get("to_date")
         period = request.GET.get("period")
         app_type = request.GET.get("app_type")
-        
+        report_param = request.GET.get("report")
+
         raw_filter = []
         if app_type in models.APP_TYPES_LIST:
             raw_filter.append(f"AND (app_type = '{app_type}')")
@@ -912,7 +913,7 @@ class DeviceVisitsAPIView(APIView):
             return Response({"error": "date validation"}, status=400)
         
         res = {}
-        summed_res = []
+        periodic_res = []
         
         raw_filter = " ".join(raw_filter) if raw_filter else ""
         cursor = connection.cursor()
@@ -926,9 +927,10 @@ class DeviceVisitsAPIView(APIView):
         
         for s in stat:
             time, device_type, os_type, country, count = s
+            time = str(time)
             if country != "UZ":
                 country = "ANOTHER"
-
+            # res
             if not(device_type in res.keys()):
                 res[device_type] = {}
 
@@ -937,38 +939,23 @@ class DeviceVisitsAPIView(APIView):
                 device.update({os_type: {"UZ": 0, "ANOTHER": 0}})
                 
             device[os_type][country] += count
-                
-            # for s in stat:
-            #     time = s[0]
-            #     exists = False
-            #     watched_users = s[1] + s[2]
-            #     for val in data:
-            #         if val.get("time") == time:
-            #             val["watched_users"] += watched_users
-            #             exists = True
-            #     if not exists:
-            #         data.append({"time": time, "watched_users": watched_users,})
+            # periodic_res
+            exists = False
+            for x in periodic_res:
+                if time in x.keys():
+                    x[time][country] += count
+                    exists = True
             
-            #     age_group = s[3]
-            #     if age_group in utils.CHILDREN_AGE_GROUPS:
-            #         children[age_group] += watched_users
-            #     else:
-            #         if s[1]:
-            #             men[age_group] += s[1]
-            #         if s[2]:
-            #             women[age_group] += s[2]
-            #     total_watched_users += watched_users
-                
-                
-        # res = [
-        #  device_type(Smartphone): {
-        #      os_type1(Android): {"uzbekistan": 1, "another": 1},
-        #      os_type2(IOS): {"uzbekistan": 1, "another": 1}
-        #  },
-        # ]
+            if not exists:
+                to_append = {time: {"UZ": 0, "ANOTHER": 0}}
+                to_append[time][country] += count
+                periodic_res.append(to_append)
+        
+        if report_param == "True":
+            print
         
         
-        return Response(res, status=200)
+        return Response({"by_devices": res, "by_time": periodic_res}, status=200)
 
 
 # ------------------------------------------------

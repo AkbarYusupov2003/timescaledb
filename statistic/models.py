@@ -74,8 +74,8 @@ class RegisterHour(TimescaleModel):
     count = models.IntegerField(verbose_name="Количество")
 
     class Meta:
-        verbose_name = "Регистрации в час"
-        verbose_name_plural = "02. Регистрации в часы"
+        verbose_name = "Регистрации за час"
+        verbose_name_plural = "02. Регистрации за час"
         db_table = "statistic_register_hour"
         ordering = ("-time",)
 
@@ -84,8 +84,8 @@ class RegisterDay(TimescaleModel):
     count = models.IntegerField(verbose_name="Количество")
 
     class Meta:
-        verbose_name = "Регистрации в день"
-        verbose_name_plural = "03. Регистрации в дни"
+        verbose_name = "Регистрации за день"
+        verbose_name_plural = "03. Регистрации за день"
         db_table = "statistic_register_day"
         ordering = ("-time",)
 
@@ -95,8 +95,8 @@ class SubscriptionHour(TimescaleModel):
     count = models.IntegerField(verbose_name="Количество")
     
     class Meta:
-        verbose_name = "Подписки в час"
-        verbose_name_plural = "04. Подписки в часы"
+        verbose_name = "Подписки за час"
+        verbose_name_plural = "04. Подписки за час"
         db_table = "statistic_subscription_hour"
         ordering = ("-time",)
 
@@ -106,8 +106,8 @@ class SubscriptionDay(TimescaleModel):
     count = models.IntegerField(verbose_name="Количество")
     
     class Meta:
-        verbose_name = "Подписки в день"
-        verbose_name_plural = "05. Подписки в дни"
+        verbose_name = "Подписки за день"
+        verbose_name_plural = "05. Подписки за день"
         db_table = "statistic_subscription_day"
         ordering = ("-time",)
 
