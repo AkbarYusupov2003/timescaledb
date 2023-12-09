@@ -126,7 +126,6 @@ class DeviceVisitsHour(TimescaleModel):
         ("Desktop", "Desktop"),
     )
     OS_TYPES = (
-        # "Other",
         ("Android", "Android"),
         ("iOS", "iOS"),
         ("Windows", "Windows"),
@@ -139,10 +138,11 @@ class DeviceVisitsHour(TimescaleModel):
         ("Ubuntu", "Ubuntu"),
     )
     
-    app_type = models.CharField(choices=APP_TYPES)
-    device_type = models.CharField(choices=DEVICE_TYPES)
-    os_type = models.CharField(choices=OS_TYPES)
-    country = models.CharField(max_length=32)
+    app_type = models.CharField("Вход из", choices=APP_TYPES)
+    device_type = models.CharField("Тип устройства", choices=DEVICE_TYPES)
+    os_type = models.CharField("Тип OC", choices=OS_TYPES)
+    country = models.CharField("Страна", max_length=32)
+    count = models.PositiveIntegerField(verbose_name="Количество", default=0)
 
     class Meta:
         verbose_name = "Посещения с девайсов в час"
@@ -176,10 +176,11 @@ class DeviceVisitsDay(TimescaleModel):
         ("Ubuntu", "Ubuntu"),
     )
 
-    app_type = models.CharField(choices=APP_TYPES)
-    device_type = models.CharField(choices=DEVICE_TYPES)
-    os_type = models.CharField(choices=OS_TYPES)
-    country = models.CharField(max_length=32)
+    app_type = models.CharField("Вход из", choices=APP_TYPES)
+    device_type = models.CharField("Тип устройства", choices=DEVICE_TYPES)
+    os_type = models.CharField("Тип OC", choices=OS_TYPES)
+    country = models.CharField("Страна", max_length=32)
+    count = models.PositiveIntegerField(verbose_name="Количество", default=0)
 
     class Meta:
         verbose_name = "Посещения с девайсов день"
@@ -213,10 +214,11 @@ class DeviceVisitsMonth(TimescaleModel):
         ("Ubuntu", "Ubuntu"),
     )
 
-    app_type = models.CharField(choices=APP_TYPES)
-    device_type = models.CharField(choices=DEVICE_TYPES)
-    os_type = models.CharField(choices=OS_TYPES)
-    country = models.CharField(max_length=32)
+    app_type = models.CharField("Вход из", choices=APP_TYPES)
+    device_type = models.CharField("Тип устройства", choices=DEVICE_TYPES)
+    os_type = models.CharField("Тип OC", choices=OS_TYPES)
+    country = models.CharField("Страна", max_length=32)
+    count = models.PositiveIntegerField(verbose_name="Количество", default=0)
 
     class Meta:
         verbose_name = "Посещения с девайсов за месяц"

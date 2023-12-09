@@ -912,7 +912,8 @@ class DeviceVisitsAPIView(APIView):
             return Response({"error": "date validation"}, status=400)
         
         res = []
-
+        summed_res = []
+        
         raw_filter = " ".join(raw_filter) if raw_filter else ""
         cursor = connection.cursor()
         query = f"""SELECT time_bucket('1 {period}', time) AS interval, device_type, os_type, country
@@ -923,14 +924,19 @@ class DeviceVisitsAPIView(APIView):
         stat = cursor.fetchall() 
         print("STAT", stat)
         
-        # 1: Filter with app_type -> FOR EACH "DEVICE TYPE" RETURN LIST OF "OS TYPES" COUNTED DEVICES AND GROUPED BY COUNTRY
-        # 1: APP:
-        #           Smartphone: Android, IOS, 
-        #           Tablet: Android, IOS, 
-        #           SmartTV:
-        #           Desktop:
-        
-        
+        for s in stat:
+            time, device_type, os_type, country = s
+            print("s", s)
+            exists = False
+            
+            if not exists:
+                res.append({""})
+        # res = [
+        #  device_type(Smartphone): {
+        #      os_type1(Android): {"uzbekistan": 1, "another": 1},
+        #      os_type2(IOS): {"uzbekistan": 1, "another": 1}
+        #  },
+        # ]
         
         
         return Response({"worked": True}, status=200)
