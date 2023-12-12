@@ -55,10 +55,9 @@ def get_data_from_token(token):
 
 
 def throttling_by_sid(sid):
-    # datetime.now() - 9 sec
-    now = datetime.datetime.now()
+    now = datetime.datetime.now() - datetime.timedelta(seconds=9)
+    print("now", now)
     if models.History.objects.filter(time__gt=now):
         return Exception("too many requests")
     else:
         return sid
-    
