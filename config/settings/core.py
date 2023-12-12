@@ -107,12 +107,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-# SIMPLE_JWT = {
-#     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-#     "REFRESH_TOKEN_LIFETIME": timedelta(days=60),
-#     "ROTATE_REFRESH_TOKENS": True
-# }
-
 # TODO
 # CORS_ALLOWED_ORIGINS = ["https://domain.com",]
 # CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://\w+\.domain\.com$",]
