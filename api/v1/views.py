@@ -55,8 +55,8 @@ class BroadcastCategoryListAPIView(generics.ListAPIView):
 
 # History
 class CreateHistoryAPIView(APIView):
-    authentication_classes = ()
-    
+    permission_classes = (permissions.AllowAny,)
+
     def post(self, request, *args, **kwargs):
         print("create history")
         try:
