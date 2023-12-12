@@ -65,9 +65,13 @@ class CreateHistoryAPIView(APIView):
             print(splay_data)
             if not splay_data:
                 return Response({"Error": "token validation"}, status=400)
-            sid = utils.throttling_by_sid(splay_data["sid"]) # "sdgt21gknmg'l3kwgnnk"
+            sid = utils.throttling_by_sid(splay_data["sid"])
             age = splay_data.get("age")
             gender = splay_data.get("gender")
+            # TODO REMOVE
+            age = 18
+            gender = "M"
+            #
             if (not age) or (not gender):
                 return Response({"Error": "age, gender validation"}, status=400)
             age = utils.get_group_by_age(age)
@@ -84,7 +88,6 @@ class CreateHistoryAPIView(APIView):
             ip_address = request.META.get('REMOTE_ADDR')
 
         user_agent = request.META.get('HTTP_USER_AGENT', '')
-
         data = {
             "sid": sid, "ip_address": ip_address, "user_agent": user_agent,
             "time": datetime.datetime.now(), "gender": gender, "age_group": age,
@@ -104,7 +107,7 @@ class CreateHistoryAPIView(APIView):
         print("data: ", data)
         models.History.objects.create(**data)
         print("create history ended")
-        return Response("Ok")
+        return Response({"message": "The history entry was added"}, status=201)
 
 
 # Content
