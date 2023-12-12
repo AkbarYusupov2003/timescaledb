@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     "api.v1",
     "internal",
     "statistic",
-    "users", #
+    "users", # TODO remove
 ]
 
 MIDDLEWARE = [
