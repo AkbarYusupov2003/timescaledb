@@ -59,6 +59,6 @@ def throttling_by_sid(sid):
     now = datetime.datetime.now() - datetime.timedelta(seconds=9)
     print("now", now)
     if models.History.objects.filter(time__gt=now):
-        return Exception("too many requests")
+        raise Exception("too many requests")
     else:
         return sid

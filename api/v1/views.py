@@ -62,16 +62,20 @@ class CreateHistoryAPIView(APIView):
         print("create history")
         try:
             splay_data = utils.get_data_from_token(request.META["HTTP_AUTHORIZATION"])
+            print(splay_data)
             if not splay_data:
                 return Response({"Error": "token validation"}, status=400)
             sid = utils.throttling_by_sid(splay_data["sid"]) # "sdgt21gknmg'l3kwgnnk"
-            gender = "M" # splay_data["gender"]
-            age = utils.get_group_by_age(splay_data["age"]) # utils.get_group_by_age(19)
+            age = splay_data.get("age")
+            gender = splay_data.get("gender")
+            if (not age) or (not gender):
+                return Response({"Error": "age, gender validation"}, status=400)
+            age = utils.get_group_by_age(age)
             content_id = int(request.data.get('content_id', 0))
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
         except Exception as e:
-            return Response({"Error": e}, status=400)
+            return Response({"Error": str(e)}, status=400)
 
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
