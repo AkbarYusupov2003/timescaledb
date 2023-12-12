@@ -48,9 +48,10 @@ def get_data_from_token(token):
     try:
         # TODO
         # key: django-insecure
-        data = jwt.decode(token, options={"verify_signature": True})
+        data = jwt.decode(token[7:], options={"verify_signature": False})
         return data
     except Exception as e:
+        print('exception', e)
         return None
 
 
