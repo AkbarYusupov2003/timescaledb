@@ -1,4 +1,6 @@
 import jwt
+import datetime
+from statistic import models
 
 
 ALLOWED_PERIODS = ("hours", "day", "month")
@@ -50,3 +52,13 @@ def get_data_from_token(token):
         return data
     except Exception as e:
         return None
+
+
+def throttling_by_sid(sid):
+    # datetime.now() - 9 sec
+    now = datetime.datetime.now()
+    if models.History.objects.filter(time__gt=now):
+        return Exception("too many requests")
+    else:
+        return sid
+    

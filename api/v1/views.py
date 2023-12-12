@@ -55,6 +55,7 @@ class BroadcastCategoryListAPIView(generics.ListAPIView):
 
 # History
 class CreateHistoryAPIView(APIView):
+    authentication_classes = ()
     
     def post(self, request, *args, **kwargs):
         print("create history")
@@ -62,12 +63,12 @@ class CreateHistoryAPIView(APIView):
             splay_data = utils.get_data_from_token(self.request.data.get("token"))
             if not splay_data:
                 return Response({"Error": "token validation"}, status=400)
+            sid = utils.throttling_by_sid(splay_data["sid"]) # "sdgt21gknmg'l3kwgnnk"
+            gender = splay_data["gender"] # "M"
+            age = utils.get_group_by_age(splay_data["age"]) # utils.get_group_by_age(19)
             content_id = int(request.data.get('content_id', 0))
             broadcast_id = int(request.data.get('broadcast_id', 0))
             episode_id = int(request.data.get('episode_id', 0))
-            sid = splay_data["sid"]# "sdgt21gknmg'l3kwgnnk"
-            gender = "M" # splay_data["gender"] # "M"
-            age = utils.get_group_by_age(splay_data["age"]) # utils.get_group_by_age(19)
         except Exception as e:
             return Response({"Error": e}, status=400)
 
