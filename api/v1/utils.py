@@ -1,5 +1,6 @@
 import jwt
 import datetime
+from django.conf import settings
 from statistic import models
 
 
@@ -47,8 +48,8 @@ def get_group_by_age(age):
 def get_data_from_token(token):
     try:
         # TODO
-        # key: django-insecure
-        data = jwt.decode(token[7:], options={"verify_signature": False})
+        # 
+        data = jwt.decode(token[7:], key=settings.SPLAY_JWT_KEY, algorithms=("HS256",), options={"verify_signature": True})
         return data
     except Exception as e:
         print('exception', e)
