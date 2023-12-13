@@ -50,13 +50,11 @@ def get_data_from_token(token):
         data = jwt.decode(token[7:], key=settings.SPLAY_JWT_KEY, algorithms=("HS256",), options={"verify_signature": True})
         return data
     except Exception as e:
-        print('exception', e)
         return None
 
 
 def throttling_by_sid(sid):
     now = datetime.datetime.now() - datetime.timedelta(seconds=9)
-    print("now", now)
     if models.History.objects.filter(time__gt=now):
         raise Exception("too many requests")
     else:
