@@ -104,9 +104,7 @@ class CreateHistoryAPIView(APIView):
             data["slug"] = str(broadcast_id)
         else:
             return Response({"error": "id validation"}, status=400)
-        print("data: ", data)
         models.History.objects.create(**data)
-        print("create history ended")
         return Response({"message": "The history entry was added"}, status=201)
 
 

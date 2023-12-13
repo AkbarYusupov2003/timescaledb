@@ -508,7 +508,7 @@ class Report(models.Model):
         broadcast = "BROADCAST", "Телеканалы"
         register = "REGISTER", "Регистрации"
         subscriptions = "SUBSCRIPTIONS", "Подписки"
-        visits = "VISITS", "Посещения с девайсов" # TODO
+        visits = "VISITS", "Посещения с девайсов"
         category_views = "CATEGORY_VIEWS", "Просмотры категорий"
         ads = "ADS", "Реклама" # TODO
 
