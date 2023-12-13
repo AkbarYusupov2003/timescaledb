@@ -147,7 +147,13 @@ def daily_history_task():
             )
             view_category.watched_users_count += 1
             view_category.save()
-
+        
+        daily_content_views, _ = models.DailyContentViews.objects.get_or_create(
+            time=creation_time, content_id=content.content_id, episode_id=content.episode_id, 
+            age_group=content.age_group, gender=content.gender, category_id=category_id
+        )
+        daily_content_views.total_views += 1
+        daily_content_views.save()
 
     daily_broadcasts = models.BroadcastDay.objects.filter(time=creation_time)
     for broadcast in daily_broadcasts:
@@ -164,10 +170,12 @@ def daily_history_task():
         )
         view_category.watched_users_count += 1
         view_category.save()
+        
     # Monthly ended
 
     # TODO --------------------------------------------
     cursor = connection.cursor()
+    # Change FROM to statistic_content_day
     query = f"""SELECT content_id, episode_id, SUM(watched_users_count), age_group, gender
                 FROM statistic_content_month
                 WHERE (time = '{monthly_creation_time}')
