@@ -79,8 +79,9 @@ def hourly_history_task():
 
 @shared_task(name="daily-history-task")
 def daily_history_task():
-    to_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    creation_time = datetime.datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
+    now = datetime.datetime.now()
+    to_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    creation_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(days=1)
     print("FROM TIME", from_time, to_time)
     # DAILY
@@ -128,9 +129,11 @@ def daily_history_task():
 
     # MONTHLY
     daily_contents = models.ContentDay.objects.filter(time=creation_time)
+    monthly_creation_time = now.replace(day=1, hour=12, minute=0, second=0, microsecond=0)
+    print("monthly_creation_time", monthly_creation_time)
     for content in daily_contents:
-        monthly_c = models.ContentMonth.objects.create(
-            time=creation_time, content_id=content.content_id, episode_id=content.episode_id,
+        monthly_c, _ = models.ContentMonth.objects.get_or_create(
+            time=monthly_creation_time, content_id=content.content_id, episode_id=content.episode_id,
             sid=content.sid, age_group=content.age_group, gender=content.gender
         )
         monthly_c.watched_users_count += 1
@@ -140,15 +143,16 @@ def daily_history_task():
         # View Category
         if category_id:
             view_category, _ = models.CategoryViewMonth.objects.get_or_create(
-                time=creation_time, category_id=category_id, age_group=history.age_group, gender=history.gender
+                time=monthly_creation_time, category_id=category_id, age_group=history.age_group, gender=history.gender
             )
             view_category.watched_users_count += 1
             view_category.save()
 
+
     daily_broadcasts = models.BroadcastDay.objects.filter(time=creation_time)
     for broadcast in daily_broadcasts:
-        monthly_b = models.BroadcastMonth.objects.create(
-            time=creation_time, broadcast_id=broadcast.broadcast_id,
+        monthly_b, _ = models.BroadcastMonth.objects.get_or_create(
+            time=monthly_creation_time, broadcast_id=broadcast.broadcast_id,
             sid=broadcast.sid, age_group=broadcast.age_group, gender=broadcast.gender
         )
         monthly_b.watched_users_count += 1
@@ -156,16 +160,17 @@ def daily_history_task():
         monthly_b.save()
         # View Category
         view_category, _ = models.CategoryViewMonth.objects.get_or_create(
-            time=creation_time, category_id=5, age_group=history.age_group, gender=history.gender
+            time=monthly_creation_time, category_id=5, age_group=history.age_group, gender=history.gender
         )
         view_category.watched_users_count += 1
         view_category.save()
     # Monthly ended
 
+    # TODO --------------------------------------------
     cursor = connection.cursor()
     query = f"""SELECT content_id, episode_id, SUM(watched_users_count), age_group, gender
                 FROM statistic_content_month
-                WHERE (time = '{creation_time}')
+                WHERE (time = '{monthly_creation_time}')
                 GROUP BY content_id, episode_id, watched_users_count, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
