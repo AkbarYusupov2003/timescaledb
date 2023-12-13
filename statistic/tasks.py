@@ -83,7 +83,6 @@ def daily_history_task():
     to_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
     creation_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
     from_time = to_time - datetime.timedelta(days=1)
-    print("FROM TIME", from_time, to_time)
     # DAILY
     contents = internal_models.Content.objects.all()
     for content in contents:
@@ -129,7 +128,6 @@ def daily_history_task():
     # MONTHLY
     daily_contents = models.ContentDay.objects.filter(time=creation_time)
     monthly_creation_time = now.replace(day=1, hour=12, minute=0, second=0, microsecond=0)
-    print("monthly_creation_time", monthly_creation_time)
     for content in daily_contents:
         monthly_c, _ = models.ContentMonth.objects.get_or_create(
             time=monthly_creation_time, content_id=content.content_id, episode_id=content.episode_id,
