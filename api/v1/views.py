@@ -21,8 +21,6 @@ from internal import models as internal_models
 # Subscription: http://127.0.0.1:8000/subscription-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
 # Register: http://127.0.0.1:8000/register-stat/?period=day&from_date=2022-12-16&to_date=2023-12-17
 
-# TODO add next and previous pages params to Content and Broadcast list
-
 
 # Internal
 class SponsorListAPIView(generics.ListAPIView):
@@ -891,6 +889,7 @@ class SubscriptionTotalStatAPIView(APIView):
         return Response(res, status=200)
 
 
+# TODO (not working now)
 class DeviceVisitsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
@@ -930,7 +929,6 @@ class DeviceVisitsAPIView(APIView):
                     GROUP BY interval, device_type, os_type, country"""
         cursor.execute(query)
         stat = cursor.fetchall() 
-        print("STAT", stat)
         
         for s in stat:
             time, device_type, os_type, country, count = s

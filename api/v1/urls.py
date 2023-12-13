@@ -31,8 +31,6 @@ urlpatterns = [
     path("report/performing/", views.PerformingReportAPIView.as_view()),
     path("report/performed/", views.PerformedReportAPIView.as_view()),
     path("report/<int:pk>/downloaded/", views.ReportDownloadedAPIView.as_view()),
-    #
     # _____________________________________________________________________________________
-    path("device-visits/", views.DeviceVisitsAPIView.as_view()),
     path("most-viewed-content/", views.MostViewedContentAPIView.as_view()),
 ]
