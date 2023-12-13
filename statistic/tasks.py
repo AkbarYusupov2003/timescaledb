@@ -85,7 +85,6 @@ def daily_history_task():
     from_time = to_time - datetime.timedelta(days=1)
     print("FROM TIME", from_time, to_time)
     # DAILY
-    
     contents = internal_models.Content.objects.all()
     for content in contents:
         histories = models.History.objects.filter(
@@ -172,20 +171,19 @@ def daily_history_task():
         view_category.save()
         
     # Monthly ended
-
     cursor = connection.cursor()
-    query = f"""SELECT SUM(watched_users_count), age_group, gender
+    query = f"""SELECT SUM(total_views), age_group, gender
                 FROM statistic_daily_content_views
                 WHERE (time = '{creation_time}')
-                GROUP BY watched_users_count, age_group, gender"""
+                GROUP BY total_views, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
     for s in stat:
-        views, age_group, gender = s
+        total_views, age_group, gender = s
         daily_total, _ = models.DailyTotalViews.objects.get_or_create(
-            age_group=age_group, gender=gender
+            time=creation_time, age_group=age_group, gender=gender
         )
-        daily_total.total_views += views
+        daily_total.total_views += total_views
         daily_total.save()
 
 
