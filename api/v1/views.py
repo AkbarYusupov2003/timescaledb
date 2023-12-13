@@ -57,7 +57,6 @@ class CreateHistoryAPIView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        print("create history")
         try:
             splay_data = utils.get_data_from_token(request.META["HTTP_AUTHORIZATION"])
             print(splay_data)
