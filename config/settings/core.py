@@ -103,6 +103,4 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
 
-# TODO
-# CORS_ALLOWED_ORIGINS = ["https://domain.com",]
-# CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://\w+\.domain\.com$",]
+CORS_ALLOW_ALL_ORIGINS = True
