@@ -47,8 +47,6 @@ def get_group_by_age(age):
 
 def get_data_from_token(token):
     try:
-        # TODO
-        # 
         data = jwt.decode(token[7:], key=settings.SPLAY_JWT_KEY, algorithms=("HS256",), options={"verify_signature": True})
         return data
     except Exception as e:
