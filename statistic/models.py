@@ -59,7 +59,7 @@ class History(models.Model):
     duration = models.PositiveIntegerField(
         verbose_name="Длительность", default=10
     )
-    time = TimescaleDateTimeField(verbose_name="Создано", interval="1 month")
+    time = TimescaleDateTimeField(verbose_name="Создано", interval="2 days")
     objects = TimescaleManager()
 
     class Meta:
