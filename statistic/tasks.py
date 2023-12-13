@@ -173,38 +173,20 @@ def daily_history_task():
         
     # Monthly ended
 
-    # TODO --------------------------------------------
     cursor = connection.cursor()
-    # Change FROM to statistic_content_day
-    query = f"""SELECT content_id, episode_id, SUM(watched_users_count), age_group, gender
-                FROM statistic_content_month
-                WHERE (time = '{monthly_creation_time}')
-                GROUP BY content_id, episode_id, watched_users_count, age_group, gender"""
+    query = f"""SELECT SUM(watched_users_count), age_group, gender
+                FROM statistic_daily_content_views
+                WHERE (time = '{creation_time}')
+                GROUP BY watched_users_count, age_group, gender"""
     cursor.execute(query)
     stat = cursor.fetchall()
-    print("STAT", stat)
-
     for s in stat:
-        content_id, episode_id, watched_users_count, age_group, gender = s
-
-        slug = f"{content_id}_{episode_id if episode_id else 'null' }"
-        exists, category_id = etc.is_content_exists_or_create(
-            {"content_id": content_id, "episode_id": episode_id}, slug
+        views, age_group, gender = s
+        daily_total, _ = models.DailyTotalViews.objects.get_or_create(
+            age_group=age_group, gender=gender
         )
-        if exists:
-            data = {"time": creation_time, "age_group": age_group, "gender": gender}
-            total, _ = models.DailyTotalViews.objects.get_or_create(**data)
-            total.total_views += watched_users_count
-            total.save()
-
-            if category_id:
-                data.update({"content_id": content_id, "episode_id": episode_id, "category_id": category_id})
-            else:
-                data.update({"content_id": content_id, "episode_id": episode_id})
-                
-            content, _ = models.DailyContentViews.objects.get_or_create(**data)
-            content.total_views += watched_users_count
-            content.save()
+        daily_total.total_views += views
+        daily_total.save()
 
 
 # Data Update
